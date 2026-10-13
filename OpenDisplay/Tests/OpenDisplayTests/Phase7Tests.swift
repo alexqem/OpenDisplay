@@ -3,34 +3,13 @@ import XCTest
 
 final class Phase7Tests: XCTestCase {
 
-    func testHTTPRouterStatus() {
-        let raw = "GET /api/v1/status HTTP/1.1\r\nHost: localhost\r\n\r\n"
-        let parsed = HTTPRouter.parseRawRequest(raw)
-        XCTAssertNotNil(parsed)
-        XCTAssertEqual(parsed?.method, "GET")
-        XCTAssertEqual(parsed?.path, "/api/v1/status")
-
-        let resp = HTTPRouter.handleRequest(parsed!)
-        XCTAssertEqual(resp.statusCode, 200)
-        XCTAssertTrue(resp.bodyJson.contains("\"status\":\"running\""))
-    }
-
-    func testHTTPRouterNotFound() {
-        let raw = "GET /api/unknown HTTP/1.1\r\nHost: localhost\r\n\r\n"
-        let parsed = HTTPRouter.parseRawRequest(raw)
-        XCTAssertNotNil(parsed)
-
-        let resp = HTTPRouter.handleRequest(parsed!)
-        XCTAssertEqual(resp.statusCode, 404)
-    }
-
-    func testHTTPRouterPostMissingBody() {
-        let raw = "POST /api/v1/virtual/create HTTP/1.1\r\nHost: localhost\r\n\r\n"
-        let parsed = HTTPRouter.parseRawRequest(raw)
-        XCTAssertNotNil(parsed)
-
-        let resp = HTTPRouter.handleRequest(parsed!)
-        XCTAssertEqual(resp.statusCode, 400)
+    func testAutomationConstants() {
+        XCTAssertEqual(AutomationConstants.cliDefaultTargetAll, "all")
+        XCTAssertEqual(AutomationConstants.cliDefaultTargetActive, "active")
+        XCTAssertEqual(AutomationConstants.cliDefaultVirtualName, "OpenDisplay Virtual")
+        XCTAssertEqual(AutomationConstants.cliDefaultAspect, "16:9")
+        XCTAssertEqual(AutomationConstants.cliDefaultVirtualWidth, 3840)
+        XCTAssertEqual(AutomationConstants.cliDefaultDegrees, 0)
     }
 
     func testCLIParsingGet() {
@@ -46,5 +25,13 @@ final class Phase7Tests: XCTestCase {
     func testCLIParsingCreateVirtual() {
         let cmd = OpenDisplayCLI.parse(arguments: ["create-virtual", "-name=Studio", "-aspect=16:10", "-width=2560"])
         XCTAssertEqual(cmd, .createVirtual(name: "Studio", aspect: "16:10", width: 2560))
+    }
+
+    func testCLIParsingPresets() {
+        let cmd = OpenDisplayCLI.parse(arguments: ["presets"])
+        XCTAssertEqual(cmd, .listPresets)
+
+        let cmdAlt = OpenDisplayCLI.parse(arguments: ["list-presets"])
+        XCTAssertEqual(cmdAlt, .listPresets)
     }
 }

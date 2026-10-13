@@ -38,9 +38,8 @@ OpenDisplay provides complete, fine-grained control over external and built-in d
   - Native macOS brightness OSD indicator with chiclets via private `com.apple.OSDUIHelper` XPC.
   - System media key interception (`NX_SYSDEFINED` events) for external displays with fallback to F1/F2 keys.
   - MacBook camera notch blackout overlay bar.
-- **Automation, CLI & Local REST Server:**
-  - Embedded local HTTP REST daemon powered by `Network.framework` (`NWListener`) on port 18080.
-  - Fast CLI (`OpenDisplayCLI`) for terminal scripting, Shortcuts, and automation.
+- **Automation & CLI:**
+  - Lightweight, fast CLI (`OpenDisplayCLI` + `DisplayCommandDispatcher`) for terminal scripting, Shortcuts, and automation without opening local network ports.
   - One-click configuration presets with JSON export/import and Launch-at-Login support (`SMAppService`).
 
 ---
@@ -51,7 +50,7 @@ OpenDisplay provides complete, fine-grained control over external and built-in d
 2. **KISS & DRY:** Separation of pure mathematical/protocol logic from hardware callers so every core algorithm is 100% testable offline.
 3. **Zero Magic Numbers:** All VCP opcodes, I2C addresses, aspect multipliers, protocol limits, and timeouts reside in dedicated `Constants/` structs and enums.
 4. **Dynamic Private API Binding:** Private macOS frameworks (`CoreDisplay`, `SkyLight`, `IOKit`, `DisplayServices`, `CoreBrightness`) are resolved at runtime via dynamic wrappers (`DynamicLibrary` and `DynamicObjCClass`) ensuring stability across macOS updates.
-5. **Completely Free & Open Source:** Clean-room implementation, no tracking, no telemetry, no paid tiers.
+5. **Completely Free & Open Source:** Clean-room implementation, no tracking, no telemetry, no paid tiers, zero open ports.
 
 ---
 
@@ -68,7 +67,7 @@ OpenDisplay/
 │   ├── VirtualDisplay/            # VirtualDisplayController, SkyLightModeEngine, DisplayMirrorController, DisplayPresetManager, DisplayPowerStateController
 │   ├── Luminance/                 # GammaDimmingEngine, XDROverdriveEngine, NightShiftTrueToneBridge, AmbientBrightnessSyncEngine
 │   ├── Streaming/                 # PipCaptureEngine (ScreenCaptureKit), PipWindowPanel (.floating)
-│   ├── Automation/                # HTTPRouter, LocalHTTPServer, OpenDisplayCLI, DisplayCommandDispatcher, LaunchAtLoginController
+│   ├── Automation/                # OpenDisplayCLI, DisplayCommandDispatcher, LaunchAtLoginController
 │   ├── UI/                        # AppMenuView (SwiftUI), MenuBarController, MediaKeysListener, NativeOSDController, NotchOverlayManager
 │   └── AppFeatureManager.swift    # Permanent Unrestricted Feature Engine
 └── Tests/OpenDisplayTests/        # Complete Unit Test Suite (Phase1Tests ... Phase13Tests)
@@ -102,7 +101,7 @@ swift build -c release
 
 ## Automation & CLI Usage
 
-OpenDisplay includes a built-in CLI interface for terminal scripting:
+OpenDisplay includes a built-in CLI interface for terminal scripting and macOS Shortcuts:
 
 ```bash
 # Read display properties
@@ -124,21 +123,9 @@ opendisplay rotate -target=1 -degrees=90
 # Software disconnect / reconnect screen
 opendisplay disconnect -target=1
 opendisplay reconnect -target=1
-```
 
-### Local REST API (Port 18080)
-
-```bash
-# Check service health
-curl http://localhost:18080/api/v1/status
-
-# Enumerate active displays
-curl http://localhost:18080/api/v1/displays
-
-# Create virtual display
-curl -X POST http://localhost:18080/api/v1/virtual/create \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Virtual Screen","width":3840,"height":2160,"hiDPI":true}'
+# List display configuration presets
+opendisplay presets
 ```
 
 ---

@@ -1,20 +1,24 @@
 import Foundation
 
-/// Constants for embedded local HTTP automation server and CLI
+/// Constants for Command-Line Interface and Automation
 public enum AutomationConstants {
-    public static let defaultHttpPort: UInt16 = 18080
-    public static let maxRequestBodyLength: Int = 8192
-    public static let contentTypeJson: String = "application/json"
-    public static let serverName: String = "OpenDisplay-Engine/1.0"
-
-    // HTTP Status Codes
-    public static let statusOk: Int = 200
-    public static let statusCreated: Int = 201
-    public static let statusBadRequest: Int = 400
-    public static let statusNotFound: Int = 404
-
-    // CLI Default Targets
+    // CLI Default Flags and Arguments
     public static let cliDefaultTargetAll: String = "all"
     public static let cliDefaultTargetActive: String = "active"
+    public static let cliDefaultVirtualName: String = "OpenDisplay Virtual"
+    public static let cliDefaultAspect: String = "16:9"
+    public static let cliDefaultVirtualWidth: UInt32 = 3840
     public static let cliDefaultDegrees: Int32 = 0
+    public static let cliDefaultBrightnessProperty: String = "brightness"
+    public static let cliDefaultBrightnessValue: String = "100"
+
+    // Flag prefixes
+    public static let flagTarget: String = "target"
+    public static let flagProperty: String = "property"
+    public static let flagName: String = "name"
+    public static let flagAspect: String = "aspect"
+    public static let flagWidth: String = "width"
+    public static let flagSource: String = "source"
+    public static let flagDegrees: String = "degrees"
+    public static let flagPreset: String = "preset"
 }

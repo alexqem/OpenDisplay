@@ -68,5 +68,70 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
     public func reconnect(displayID: CGDirectDisplayID) -> Bool {
         return DisplayPowerStateController.shared.reconnectDisplay(displayID: displayID)
     }
+
+    /// Execute parsed CLICommand directly against display controllers
+    public func executeCLI(_ command: CLICommand) -> (success: Bool, message: String) {
+        switch command {
+        case .help:
+            return (true, "OpenDisplay CLI: get, set, create-virtual, mirror, unmirror, rotate, disconnect, reconnect, presets")
+
+        case .get(let target, let property):
+            let targetID = CGDirectDisplayID(target) ?? CGMainDisplayID()
+            if property == AutomationConstants.cliDefaultBrightnessProperty || property == AutomationConstants.cliDefaultTargetAll {
+                let brightness = getBrightness(displayID: targetID) ?? 1.0
+                return (true, "display \(targetID) brightness: \(brightness)")
+            }
+            return (true, "display \(targetID) queried property \(property)")
+
+        case .set(let target, let property, let value):
+            let targetID = CGDirectDisplayID(target) ?? CGMainDisplayID()
+            if property == AutomationConstants.cliDefaultBrightnessProperty {
+                let val = (Float(value) ?? 100.0) / 100.0
+                let ok = setBrightness(displayID: targetID, level: val)
+                return (ok, ok ? "Set display \(targetID) brightness to \(value)%" : "Failed to set brightness")
+            }
+            return (false, "Unsupported property: \(property)")
+
+        case .createVirtual(let name, let aspect, let width):
+            let preset = DisplayAspectPreset(rawValue: aspect) ?? .ratio16_9
+            let cfg = VirtualDisplayConfig(name: name, aspectPreset: preset, baseWidth: width)
+            let controller = createVirtual(config: cfg)
+            return (controller != nil, controller != nil ? "Created virtual display ID \(controller!.displayID)" : "Failed to create virtual display")
+
+        case .mirror(let source, let target):
+            guard let sID = CGDirectDisplayID(source), let tID = CGDirectDisplayID(target) else {
+                return (false, "Invalid source or target display ID")
+            }
+            let ok = setMirror(sourceID: sID, targetID: tID)
+            return (ok, ok ? "Mirrored display \(tID) from \(sID)" : "Failed to mirror display")
+
+        case .unmirror(let target):
+            let tID = CGDirectDisplayID(target) ?? CGMainDisplayID()
+            let ok = disableMirror(displayID: tID)
+            return (ok, ok ? "Disabled mirroring on display \(tID)" : "Failed to disable mirror")
+
+        case .rotate(let target, let degrees):
+            let tID = CGDirectDisplayID(target) ?? CGMainDisplayID()
+            let angle = DisplayRotationAngle(rawValue: degrees) ?? .standard
+            let ok = setRotation(displayID: tID, angle: angle)
+            return (ok, ok ? "Rotated display \(tID) to \(degrees)°" : "Failed to rotate display")
+
+        case .disconnect(let target):
+            let tID = CGDirectDisplayID(target) ?? CGMainDisplayID()
+            let ok = disconnect(displayID: tID)
+            return (ok, ok ? "Disconnected display \(tID)" : "Failed to disconnect display")
+
+        case .reconnect(let target):
+            let tID = CGDirectDisplayID(target) ?? CGMainDisplayID()
+            let ok = reconnect(displayID: tID)
+            return (ok, ok ? "Reconnected display \(tID)" : "Failed to reconnect display")
+
+        case .listPresets:
+            return (true, "Default Native, Work 4K Setup")
+
+        case .unknown(let cmd):
+            return (false, "Unknown command: \(cmd)")
+        }
+    }
     #endif
 }

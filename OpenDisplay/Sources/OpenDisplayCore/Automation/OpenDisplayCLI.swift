@@ -10,6 +10,7 @@ public enum CLICommand: Equatable, Sendable {
     case rotate(target: String, degrees: Int32)
     case disconnect(target: String)
     case reconnect(target: String)
+    case listPresets
     case help
     case unknown(String)
 }
@@ -44,10 +45,10 @@ public enum OpenDisplayCLI {
             var target = AutomationConstants.cliDefaultTargetAll
             var property = AutomationConstants.cliDefaultTargetAll
             for arg in tail {
-                if arg.starts(with: "-target=") {
-                    target = String(arg.dropFirst("-target=".count))
-                } else if arg.starts(with: "-property=") {
-                    property = String(arg.dropFirst("-property=".count))
+                if arg.starts(with: "-\(AutomationConstants.flagTarget)=") {
+                    target = String(arg.dropFirst("-\(AutomationConstants.flagTarget)=".count))
+                } else if arg.starts(with: "-\(AutomationConstants.flagProperty)=") {
+                    property = String(arg.dropFirst("-\(AutomationConstants.flagProperty)=".count))
                 } else if arg.starts(with: "-") {
                     property = String(arg.dropFirst())
                 }
@@ -56,11 +57,11 @@ public enum OpenDisplayCLI {
 
         case "set":
             var target = AutomationConstants.cliDefaultTargetActive
-            var property = "brightness"
-            var value = "100"
+            var property = AutomationConstants.cliDefaultBrightnessProperty
+            var value = AutomationConstants.cliDefaultBrightnessValue
             for arg in tail {
-                if arg.starts(with: "-target=") {
-                    target = String(arg.dropFirst("-target=".count))
+                if arg.starts(with: "-\(AutomationConstants.flagTarget)=") {
+                    target = String(arg.dropFirst("-\(AutomationConstants.flagTarget)=".count))
                 } else if let eqIdx = arg.firstIndex(of: "=") {
                     let prop = String(arg[arg.startIndex..<eqIdx]).trimmingCharacters(in: CharacterSet(charactersIn: "-"))
                     let val = String(arg[arg.index(after: eqIdx)...])
@@ -71,34 +72,37 @@ public enum OpenDisplayCLI {
             return .set(target: target, property: property, value: value)
 
         case "create-virtual":
-            let name = parseFlag("name", arguments: tail, defaultValue: "OpenDisplay Virtual")
-            let aspect = parseFlag("aspect", arguments: tail, defaultValue: "16:9")
-            let widthStr = parseFlag("width", arguments: tail, defaultValue: "3840")
-            let width = UInt32(widthStr) ?? 3840
+            let name = parseFlag(AutomationConstants.flagName, arguments: tail, defaultValue: AutomationConstants.cliDefaultVirtualName)
+            let aspect = parseFlag(AutomationConstants.flagAspect, arguments: tail, defaultValue: AutomationConstants.cliDefaultAspect)
+            let widthStr = parseFlag(AutomationConstants.flagWidth, arguments: tail, defaultValue: String(AutomationConstants.cliDefaultVirtualWidth))
+            let width = UInt32(widthStr) ?? AutomationConstants.cliDefaultVirtualWidth
             return .createVirtual(name: name, aspect: aspect, width: width)
 
         case "mirror":
-            let source = parseFlag("source", arguments: tail)
-            let target = parseFlag("target", arguments: tail)
+            let source = parseFlag(AutomationConstants.flagSource, arguments: tail)
+            let target = parseFlag(AutomationConstants.flagTarget, arguments: tail)
             return .mirror(source: source, target: target)
 
         case "unmirror":
-            let target = parseFlag("target", arguments: tail, defaultValue: AutomationConstants.cliDefaultTargetAll)
+            let target = parseFlag(AutomationConstants.flagTarget, arguments: tail, defaultValue: AutomationConstants.cliDefaultTargetAll)
             return .unmirror(target: target)
 
         case "rotate":
-            let target = parseFlag("target", arguments: tail, defaultValue: AutomationConstants.cliDefaultTargetActive)
-            let degStr = parseFlag("degrees", arguments: tail, defaultValue: "0")
+            let target = parseFlag(AutomationConstants.flagTarget, arguments: tail, defaultValue: AutomationConstants.cliDefaultTargetActive)
+            let degStr = parseFlag(AutomationConstants.flagDegrees, arguments: tail, defaultValue: String(AutomationConstants.cliDefaultDegrees))
             let degrees = Int32(degStr) ?? AutomationConstants.cliDefaultDegrees
             return .rotate(target: target, degrees: degrees)
 
         case "disconnect":
-            let target = parseFlag("target", arguments: tail, defaultValue: AutomationConstants.cliDefaultTargetActive)
+            let target = parseFlag(AutomationConstants.flagTarget, arguments: tail, defaultValue: AutomationConstants.cliDefaultTargetActive)
             return .disconnect(target: target)
 
         case "reconnect":
-            let target = parseFlag("target", arguments: tail, defaultValue: AutomationConstants.cliDefaultTargetActive)
+            let target = parseFlag(AutomationConstants.flagTarget, arguments: tail, defaultValue: AutomationConstants.cliDefaultTargetActive)
             return .reconnect(target: target)
+
+        case "presets", "list-presets":
+            return .listPresets
 
         default:
             return .unknown(verb)
