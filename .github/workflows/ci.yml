@@ -1,0 +1,36 @@
+name: OpenDisplay CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build-and-test:
+    name: Build & Test (macOS Apple Silicon)
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Select Xcode Version
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+
+      - name: Show Swift & Xcode Version
+        run: |
+          swift --version
+          xcodebuild -version
+
+      - name: Run Test Suite (Phases 1-13)
+        working-directory: OpenDisplay
+        run: swift test -v
+
+      - name: Build Debug Binary
+        working-directory: OpenDisplay
+        run: swift build -v
+
+      - name: Build Release Binary
+        working-directory: OpenDisplay
+        run: swift build -c release -v

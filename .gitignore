@@ -1,0 +1,24 @@
+# Binaries and Disk Images
+*.dmg
+*.img
+extracted/
+
+# Build artifacts
+.build/
+.swiftpm/
+DerivedData/
+*.o
+*.dylib
+*.a
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local LLM Agent Directives
+AGENTS.md
+**/AGENTS.md
+schemas/
+BetterDisplay-v5.1.1.dmg
