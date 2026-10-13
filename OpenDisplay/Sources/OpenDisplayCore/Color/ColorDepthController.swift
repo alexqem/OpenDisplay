@@ -46,8 +46,8 @@ public final class ColorDepthController: @unchecked Sendable {
 
     /// Inspect active display mode for 10-bit Deep Color encoding
     public func is10BitColorActive(displayID: CGDirectDisplayID) -> Bool {
-        guard let mode = CGDisplayCopyDisplayMode(displayID) else { return false }
-        let pixelEncoding = mode.pixelEncoding as CFString
+        guard let mode = CGDisplayCopyDisplayMode(displayID),
+              let pixelEncoding = mode.pixelEncoding else { return false }
         return CFStringCompare(pixelEncoding, ColorPixelFormat.argb2101010.rawValue as CFString, []) == .compareEqualTo
     }
 }

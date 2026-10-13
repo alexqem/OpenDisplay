@@ -58,8 +58,8 @@ public enum RGBForcingEngine {
     }
 
     #if os(macOS) && arch(arm64)
-    private typealias IOAVServiceCreateFunc = @convention(c) (CFAllocatorRef?, io_service_t) -> UnsafeMutableRawPointer?
-    private typealias IOAVServiceSetVirtualEDIDModeFunc = @convention(c) (UnsafeMutableRawPointer, CFDataRef) -> kern_return_t
+    private typealias IOAVServiceCreateFunc = @convention(c) (CFAllocator?, io_service_t) -> UnsafeMutableRawPointer?
+    private typealias IOAVServiceSetVirtualEDIDModeFunc = @convention(c) (UnsafeMutableRawPointer, CFData) -> kern_return_t
 
     /// Apply patched EDID on Apple Silicon on the fly without rebooting
     public static func applyLiveVirtualEDID(service: io_service_t, patchedEDID: [UInt8]) -> Bool {
