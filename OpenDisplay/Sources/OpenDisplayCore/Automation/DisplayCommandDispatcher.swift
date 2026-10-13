@@ -76,7 +76,7 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
             return (true, "OpenDisplay CLI: get, set, create-virtual, mirror, unmirror, rotate, disconnect, reconnect, presets")
 
         case .get(let target, let property):
-            let targetID = CGDirectDisplayID(target) ?? CGMainDisplayID()
+            let targetID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
             if property == AutomationConstants.cliDefaultBrightnessProperty || property == AutomationConstants.cliDefaultTargetAll {
                 let brightness = getBrightness(displayID: targetID) ?? 1.0
                 return (true, "display \(targetID) brightness: \(brightness)")
@@ -84,7 +84,7 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
             return (true, "display \(targetID) queried property \(property)")
 
         case .set(let target, let property, let value):
-            let targetID = CGDirectDisplayID(target) ?? CGMainDisplayID()
+            let targetID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
             if property == AutomationConstants.cliDefaultBrightnessProperty {
                 let val = (Float(value) ?? 100.0) / 100.0
                 let ok = setBrightness(displayID: targetID, level: val)
@@ -99,30 +99,32 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
             return (controller != nil, controller != nil ? "Created virtual display ID \(controller!.displayID)" : "Failed to create virtual display")
 
         case .mirror(let source, let target):
-            guard let sID = CGDirectDisplayID(source), let tID = CGDirectDisplayID(target) else {
+            guard let sNum = UInt32(source), let tNum = UInt32(target) else {
                 return (false, "Invalid source or target display ID")
             }
+            let sID = CGDirectDisplayID(sNum)
+            let tID = CGDirectDisplayID(tNum)
             let ok = setMirror(sourceID: sID, targetID: tID)
             return (ok, ok ? "Mirrored display \(tID) from \(sID)" : "Failed to mirror display")
 
         case .unmirror(let target):
-            let tID = CGDirectDisplayID(target) ?? CGMainDisplayID()
+            let tID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
             let ok = disableMirror(displayID: tID)
             return (ok, ok ? "Disabled mirroring on display \(tID)" : "Failed to disable mirror")
 
         case .rotate(let target, let degrees):
-            let tID = CGDirectDisplayID(target) ?? CGMainDisplayID()
+            let tID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
             let angle = DisplayRotationAngle(rawValue: degrees) ?? .standard
             let ok = setRotation(displayID: tID, angle: angle)
             return (ok, ok ? "Rotated display \(tID) to \(degrees)°" : "Failed to rotate display")
 
         case .disconnect(let target):
-            let tID = CGDirectDisplayID(target) ?? CGMainDisplayID()
+            let tID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
             let ok = disconnect(displayID: tID)
             return (ok, ok ? "Disconnected display \(tID)" : "Failed to disconnect display")
 
         case .reconnect(let target):
-            let tID = CGDirectDisplayID(target) ?? CGMainDisplayID()
+            let tID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
             let ok = reconnect(displayID: tID)
             return (ok, ok ? "Reconnected display \(tID)" : "Failed to reconnect display")
 
