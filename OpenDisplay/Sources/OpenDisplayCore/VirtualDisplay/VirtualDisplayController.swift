@@ -54,7 +54,10 @@ public final class VirtualDisplayController: @unchecked Sendable {
         descriptor.setValue(UInt32.random(in: 1000...99999), forKey: "serialNumber")
 
         // 2. Instantiate CGVirtualDisplay
-        let displayAlloc = (displayClass as! NSObject.Type).alloc()
+        let allocSel = Selector(("alloc"))
+        guard displayClass.responds(to: allocSel) else { return nil }
+        guard let displayAlloc = displayClass.perform(allocSel)?.takeUnretainedValue() else { return nil }
+
         let initSel = Selector(("initWithDescriptor:"))
         guard displayAlloc.responds(to: initSel) else { return nil }
         _ = displayAlloc.perform(initSel, with: descriptor)
@@ -62,14 +65,15 @@ public final class VirtualDisplayController: @unchecked Sendable {
 
         // 3. Construct CGVirtualDisplayModes (generate native + scaled half modes for HiDPI)
         let modeInitSel = Selector(("initWithWidth:height:refreshRate:"))
-        let modeAllocProto = (modeClass as! NSObject.Type).alloc()
-        guard modeAllocProto.responds(to: modeInitSel) else { return nil }
+        guard modeClass.responds(to: allocSel) else { return nil }
+        guard let modeAllocProto = modeClass.perform(allocSel)?.takeUnretainedValue(),
+              modeAllocProto.responds(to: modeInitSel) else { return nil }
 
         typealias ModeInitFunc = @convention(c) (AnyObject, Selector, UInt, UInt, Double) -> AnyObject
 
         func makeMode(width: UInt32, height: UInt32, rate: Double) -> AnyObject? {
-            let alloc = (modeClass as! NSObject.Type).alloc()
-            let imp = alloc.method(for: modeInitSel)
+            guard let alloc = modeClass.perform(allocSel)?.takeUnretainedValue() else { return nil }
+            let imp = (alloc as AnyObject).method(for: modeInitSel)
             let modeInit = unsafeBitCast(imp, to: ModeInitFunc.self)
             return modeInit(alloc, modeInitSel, UInt(width), UInt(height), rate)
         }
