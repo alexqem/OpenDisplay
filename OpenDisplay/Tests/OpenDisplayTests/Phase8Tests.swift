@@ -25,6 +25,12 @@ final class Phase8Tests: XCTestCase {
 
         item.brightness = 0.5
         XCTAssertEqual(item.brightness, 0.5)
+
+        // Test AtlasTheme tokens
+        XCTAssertEqual(AtlasTheme.zeroRadius, 0.0)
+        XCTAssertEqual(AtlasTheme.borderWidth, 1.0)
+        XCTAssertEqual(AtlasTheme.pillRadius, 9999.0)
+        XCTAssertEqual(AtlasTheme.popoverWidth, 400.0)
         #endif
     }
 }
