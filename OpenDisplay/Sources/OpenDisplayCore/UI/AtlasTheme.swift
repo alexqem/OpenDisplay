@@ -9,8 +9,8 @@ public enum AtlasTheme {
     public static let cobaltSoft = Color(red: 0xCA / 255.0, green: 0xCA / 255.0, blue: 0xF0 / 255.0)   // #cacaf0
     public static let cobaltSofter = Color(red: 0xE8 / 255.0, green: 0xE8 / 255.0, blue: 0xF8 / 255.0) // #e8e8f8
 
-    // Typography & Slate Indigo
-    public static let textPrimary = Color(red: 0x13 / 255.0, green: 0x13 / 255.0, blue: 0xBA / 255.0)
+    // Semantic Typography Tokens
+    public static let textPrimary = cobalt
     public static let textBody = Color(red: 0x63 / 255.0, green: 0x63 / 255.0, blue: 0xC6 / 255.0)      // #6363c6
     public static let textMuted = Color(red: 0x90 / 255.0, green: 0x90 / 255.0, blue: 0xCE / 255.0)     // #9090ce
 
@@ -21,13 +21,22 @@ public enum AtlasTheme {
     // Neutral Surfaces & 1px Structural Borders
     public static let surfaceCard = Color(red: 0xFB / 255.0, green: 0xFB / 255.0, blue: 0xFE / 255.0)   // #fbfbfe
     public static let surfaceHeader = Color(red: 0xF4 / 255.0, green: 0xF4 / 255.0, blue: 0xFC / 255.0) // #f4f4fc
-    public static let borderDefault = Color(red: 0xE8 / 255.0, green: 0xE8 / 255.0, blue: 0xF8 / 255.0) // #e8e8f8
+    public static let borderDefault = cobaltSofter
     public static let borderMedium = Color(red: 0xE0 / 255.0, green: 0xE0 / 255.0, blue: 0xF2 / 255.0)  // #e0e0f2
 
-    // Geometry Constants
+    // Typography Scale Constants
+    public static let fontCaptionSmall: CGFloat = 9.0
+    public static let fontCaptionMedium: CGFloat = 10.0
+    public static let fontBodySmall: CGFloat = 11.0
+    public static let fontBodyMedium: CGFloat = 12.0
+    public static let fontHeadline: CGFloat = 16.0
+    public static let trackingTight: CGFloat = 1.0
+
+    // Geometry & Layout Constants
     public static let zeroRadius: CGFloat = 0.0
-    public static let pillRadius: CGFloat = 9999.0
     public static let borderWidth: CGFloat = 1.0
     public static let popoverWidth: CGFloat = 400.0
+    public static let maxScrollHeight: CGFloat = 400.0
+    public static let pickerWidth: CGFloat = 120.0
 }
 #endif

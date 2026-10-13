@@ -36,7 +36,7 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
 
 /// SwiftUI Main Popover Menu View for OpenDisplay styled with the Atlas / TypeUI Swiss neo-brutalist design system
 public struct AppMenuView: View {
-    @StateObject public var featureManager = AppFeatureManager.shared
+    @ObservedObject public var featureManager = AppFeatureManager.shared
     @State public var displays: [DisplayItemModel] = [
         DisplayItemModel(id: 1, name: "Built-in Liquid Retina XDR", brightness: 0.8),
         DisplayItemModel(id: 2, name: "External Studio Display (4K)", brightness: 0.75)
@@ -51,11 +51,11 @@ public struct AppMenuView: View {
             HStack(spacing: 8) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("WORKSPACE")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
                         .foregroundColor(AtlasTheme.textMuted)
-                        .tracking(1.0)
+                        .tracking(AtlasTheme.trackingTight)
                     Text("OpenDisplay")
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.system(size: AtlasTheme.fontHeadline, weight: .bold))
                         .foregroundColor(AtlasTheme.cobalt)
                 }
 
@@ -63,12 +63,12 @@ public struct AppMenuView: View {
 
                 // High-voltage Neon Lime Pill Badge
                 Text("ARM64 NATIVE")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .bold))
                     .foregroundColor(AtlasTheme.cobaltDark)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
                     .background(AtlasTheme.electricLime)
-                    .clipShape(RoundedRectangle(cornerRadius: AtlasTheme.pillRadius))
+                    .clipShape(Capsule())
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -84,19 +84,19 @@ public struct AppMenuView: View {
             ScrollView {
                 VStack(spacing: 12) {
                     ForEach(displays) { item in
-                        displayCard(for: item)
+                        DisplayCardView(item: item)
                     }
                 }
                 .padding(16)
             }
-            .frame(maxHeight: 400)
+            .frame(maxHeight: AtlasTheme.maxScrollHeight)
 
             // Footer: Sharp 0px border-top with technical dummy display generator & Quit action
             VStack(spacing: 10) {
                 HStack(spacing: 8) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("PRESET GENERATOR")
-                            .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                            .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .semibold, design: .monospaced))
                             .foregroundColor(AtlasTheme.textMuted)
                         Picker("", selection: $selectedAspectPreset) {
                             ForEach(DisplayAspectPreset.allCases, id: \.self) { preset in
@@ -105,7 +105,7 @@ public struct AppMenuView: View {
                         }
                         .labelsHidden()
                         .pickerStyle(MenuPickerStyle())
-                        .frame(width: 120)
+                        .frame(width: AtlasTheme.pickerWidth)
                     }
 
                     Spacer()
@@ -117,9 +117,9 @@ public struct AppMenuView: View {
                     }) {
                         HStack(spacing: 6) {
                             Image(systemName: "plus.rectangle.on.rectangle")
-                                .font(.system(size: 11))
+                                .font(.system(size: AtlasTheme.fontBodySmall))
                             Text("Create Dummy")
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(.system(size: AtlasTheme.fontBodySmall, weight: .semibold))
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
@@ -136,11 +136,11 @@ public struct AppMenuView: View {
                         NSApplication.shared.terminate(nil)
                     }) {
                         Text("Quit")
-                            .font(.system(size: 11, weight: .medium))
+                            .font(.system(size: AtlasTheme.fontBodySmall, weight: .medium))
                             .foregroundColor(AtlasTheme.textBody)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(Color.white)
+                            .background(AtlasTheme.surfaceCard)
                             .overlay(
                                 Rectangle().stroke(AtlasTheme.borderMedium, lineWidth: AtlasTheme.borderWidth)
                             )
@@ -159,10 +159,19 @@ public struct AppMenuView: View {
             )
         }
         .frame(width: AtlasTheme.popoverWidth)
-        .background(Color.white)
+        .background(AtlasTheme.surfaceCard)
+    }
+}
+
+/// Standalone Subview observing single DisplayItemModel to ensure reactive toggle updates
+public struct DisplayCardView: View {
+    @ObservedObject public var item: DisplayItemModel
+
+    public init(item: DisplayItemModel) {
+        self.item = item
     }
 
-    private func displayCard(for item: DisplayItemModel) -> some View {
+    public var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             // Display Title & Identification
             HStack(spacing: 8) {
@@ -171,31 +180,31 @@ public struct AppMenuView: View {
                     .foregroundColor(AtlasTheme.cobalt)
 
                 Text(item.name)
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: AtlasTheme.fontBodyMedium, weight: .bold))
                     .foregroundColor(AtlasTheme.textPrimary)
 
                 Spacer()
 
                 Text("ID: \(item.id)")
-                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                    .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .semibold, design: .monospaced))
                     .foregroundColor(AtlasTheme.textMuted)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(AtlasTheme.cobaltSofter)
-                    .clipShape(RoundedRectangle(cornerRadius: AtlasTheme.pillRadius))
+                    .clipShape(Capsule())
             }
 
             // High-Precision Linear Brightness Slider
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text("LUMINANCE")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
                         .foregroundColor(AtlasTheme.textBody)
 
                     Spacer()
 
                     Text("\(Int(item.brightness * 100))%")
-                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .font(.system(size: AtlasTheme.fontBodySmall, weight: .bold, design: .monospaced))
                         .foregroundColor(AtlasTheme.cobalt)
                 }
 
@@ -206,10 +215,10 @@ public struct AppMenuView: View {
                         _ = DisplayCommandDispatcher.shared.setBrightness(displayID: item.id, level: Float(newVal))
                     }
                 ), in: 0...1)
-                .accentColor(AtlasTheme.cobalt)
+                .tint(AtlasTheme.cobalt)
             }
 
-            // Precision Action Pills (0px sharp buttons with active state)
+            // Precision Action Pills (0px sharp buttons with reactive active state)
             HStack(spacing: 6) {
                 actionPill(
                     title: "RGB 4:4:4",
@@ -240,11 +249,11 @@ public struct AppMenuView: View {
     private func actionPill(title: String, isActive: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 10, weight: .semibold))
+                .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
                 .foregroundColor(isActive ? .white : AtlasTheme.cobalt)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
-                .background(isActive ? AtlasTheme.cobalt : Color.white)
+                .background(isActive ? AtlasTheme.cobalt : AtlasTheme.surfaceCard)
                 .overlay(
                     Rectangle().stroke(isActive ? AtlasTheme.cobaltDark : AtlasTheme.borderMedium, lineWidth: AtlasTheme.borderWidth)
                 )
