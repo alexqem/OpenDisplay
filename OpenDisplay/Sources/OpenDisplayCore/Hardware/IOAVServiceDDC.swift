@@ -99,7 +99,7 @@ import IOKit
 
 /// Direct Apple Silicon DDC/CI Hardware Controller using private IOAVService
 public final class IOAVServiceDDC {
-    private typealias IOAVServiceCreateFunc = @convention(c) (CFAllocatorRef?, io_service_t) -> UnsafeMutableRawPointer?
+    private typealias IOAVServiceCreateFunc = @convention(c) (CFAllocator?, io_service_t) -> UnsafeMutableRawPointer?
     private typealias IOAVServiceWriteI2CFunc = @convention(c) (UnsafeMutableRawPointer, UInt32, UInt32, UnsafePointer<UInt8>, UInt32) -> kern_return_t
     private typealias IOAVServiceReadI2CFunc = @convention(c) (UnsafeMutableRawPointer, UInt32, UInt32, UnsafeMutablePointer<UInt8>, UInt32) -> kern_return_t
 

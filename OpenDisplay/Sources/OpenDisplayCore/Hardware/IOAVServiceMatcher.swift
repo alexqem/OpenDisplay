@@ -84,8 +84,8 @@ public enum IOAVServiceMatcher {
         guard let prop = IORegistryEntryCreateCFProperty(entry, key as CFString, kCFAllocatorDefault, 0) else {
             return nil
         }
-        defer { CFRelease(prop) }
-        if let num = prop.takeUnretainedValue() as? NSNumber {
+        let val = prop.takeRetainedValue()
+        if let num = val as? NSNumber {
             return num.uint32Value
         }
         return nil
@@ -97,8 +97,8 @@ public enum IOAVServiceMatcher {
         guard let prop = IORegistryEntryCreateCFProperty(service, key, kCFAllocatorDefault, 0) else {
             return nil
         }
-        defer { CFRelease(prop) }
-        return prop.takeUnretainedValue() as? String
+        let val = prop.takeRetainedValue()
+        return val as? String
     }
 }
 #endif
