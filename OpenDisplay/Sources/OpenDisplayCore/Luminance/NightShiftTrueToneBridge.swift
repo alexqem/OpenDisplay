@@ -9,14 +9,14 @@ public final class NightShiftTrueToneBridge: @unchecked Sendable {
     public static let shared = NightShiftTrueToneBridge()
 
     private init() {
-        if let blueLightClass = DynamicObjCClass.resolve("CBBlueLightClient") as? NSObject.Type {
-            self.blueLightClient = blueLightClass.init()
+        if let blueLightClass = DynamicObjCClass.resolve("CBBlueLightClient") {
+            self.blueLightClient = (blueLightClass as AnyObject).perform(Selector(("new")))?.takeUnretainedValue()
         } else {
             self.blueLightClient = nil
         }
 
-        if let trueToneClass = DynamicObjCClass.resolve("CBTrueToneClient") as? NSObject.Type {
-            self.trueToneClient = trueToneClass.init()
+        if let trueToneClass = DynamicObjCClass.resolve("CBTrueToneClient") {
+            self.trueToneClient = (trueToneClass as AnyObject).perform(Selector(("new")))?.takeUnretainedValue()
         } else {
             self.trueToneClient = nil
         }

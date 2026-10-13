@@ -158,8 +158,9 @@ public final class IOAVServiceDDC {
             usleep(DDCProtocolLimits.defaultSleepMilliseconds * 1000)
 
             var replyBuffer = [UInt8](repeating: 0, count: DDCProtocolLimits.readReplyBufferSize)
+            let bufferCount = UInt32(replyBuffer.count)
             let readKr = replyBuffer.withUnsafeMutableBufferPointer { ptr in
-                readI2CFn(avServiceHandle, slave, sub, ptr.baseAddress!, UInt32(replyBuffer.count))
+                readI2CFn(avServiceHandle, slave, sub, ptr.baseAddress!, bufferCount)
             }
             if readKr == KERN_SUCCESS,
                let parsed = DDCPacketSerializer.parseReadReply(buffer: replyBuffer, expectedVcp: code) {
