@@ -27,6 +27,32 @@ final class Phase13Tests: XCTestCase {
         XCTAssertEqual(reconnectCmd, .reconnect(target: "1"))
     }
 
+    func testCLIParsingColorCalibrationCommands() {
+        // Force RGB
+        let forceRGBArgs = ["force-rgb", "-target=2"]
+        let forceRGBCmd = OpenDisplayCLI.parse(arguments: forceRGBArgs)
+        XCTAssertEqual(forceRGBCmd, .forceRGB(target: "2"))
+
+        // Set HDR enabled
+        let hdrArgs = ["hdr", "-target=1", "-state=enable"]
+        let hdrCmd = OpenDisplayCLI.parse(arguments: hdrArgs)
+        XCTAssertEqual(hdrCmd, .setHDR(target: "1", enabled: true))
+
+        // Set HDR disabled
+        let hdrOffArgs = ["hdr", "-target=1", "-state=disable"]
+        let hdrOffCmd = OpenDisplayCLI.parse(arguments: hdrOffArgs)
+        XCTAssertEqual(hdrOffCmd, .setHDR(target: "1", enabled: false))
+
+        // Set color profile
+        let profileArgs = ["color-profile", "-target=1", "-profile=Display P3"]
+        let profileCmd = OpenDisplayCLI.parse(arguments: profileArgs)
+        XCTAssertEqual(profileCmd, .setProfile(target: "1", profileName: "Display P3"))
+
+        // List color profiles
+        let listProfilesCmd = OpenDisplayCLI.parse(arguments: ["profiles"])
+        XCTAssertEqual(listProfilesCmd, .listProfiles)
+    }
+
     func testCLIParsingFallbackAndUnknown() {
         let emptyArgs: [String] = []
         XCTAssertEqual(OpenDisplayCLI.parse(arguments: emptyArgs), .help)

@@ -124,6 +124,12 @@ opendisplay rotate -target=1 -degrees=90
 opendisplay disconnect -target=1
 opendisplay reconnect -target=1
 
+# Color Calibration & Pixel Formats
+opendisplay force-rgb -target=2
+opendisplay hdr -target=1 -state=enable
+opendisplay color-profile -target=1 -profile="Display P3"
+opendisplay profiles
+
 # List display configuration presets
 opendisplay presets
 ```

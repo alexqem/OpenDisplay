@@ -11,6 +11,10 @@ public enum CLICommand: Equatable, Sendable {
     case disconnect(target: String)
     case reconnect(target: String)
     case listPresets
+    case forceRGB(target: String)
+    case setHDR(target: String, enabled: Bool)
+    case setProfile(target: String, profileName: String)
+    case listProfiles
     case help
     case unknown(String)
 }
@@ -103,6 +107,24 @@ public enum OpenDisplayCLI {
 
         case "presets", "list-presets":
             return .listPresets
+
+        case "force-rgb":
+            let target = parseFlag(AutomationConstants.flagTarget, arguments: tail, defaultValue: AutomationConstants.cliDefaultTargetActive)
+            return .forceRGB(target: target)
+
+        case "hdr":
+            let target = parseFlag(AutomationConstants.flagTarget, arguments: tail, defaultValue: AutomationConstants.cliDefaultTargetActive)
+            let state = parseFlag(AutomationConstants.flagState, arguments: tail, defaultValue: AutomationConstants.flagEnable)
+            let enabled = (state.lowercased() == AutomationConstants.flagEnable || state == "1" || state.lowercased() == "true")
+            return .setHDR(target: target, enabled: enabled)
+
+        case "color-profile", "set-profile":
+            let target = parseFlag(AutomationConstants.flagTarget, arguments: tail, defaultValue: AutomationConstants.cliDefaultTargetActive)
+            let profile = parseFlag(AutomationConstants.flagProfile, arguments: tail)
+            return .setProfile(target: target, profileName: profile)
+
+        case "profiles", "list-profiles":
+            return .listProfiles
 
         default:
             return .unknown(verb)

@@ -21,4 +21,8 @@ public enum AutomationConstants {
     public static let flagSource: String = "source"
     public static let flagDegrees: String = "degrees"
     public static let flagPreset: String = "preset"
+    public static let flagProfile: String = "profile"
+    public static let flagState: String = "state"
+    public static let flagEnable: String = "enable"
+    public static let flagDisable: String = "disable"
 }

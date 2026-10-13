@@ -131,6 +131,30 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
         case .listPresets:
             return (true, "Default Native, Work 4K Setup")
 
+        case .forceRGB(let target):
+            let tID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
+            let ok = forceRGB(service: io_service_t(tID))
+            return (ok, ok ? "Applied Force RGB 4:4:4 mode to display \(tID)" : "Failed to force RGB 4:4:4")
+
+        case .setHDR(let target, let enabled):
+            let tID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
+            let ok = ColorDepthController.shared.setHDREnabled(displayID: tID, enabled: enabled)
+            return (ok, ok ? "Set HDR \(enabled ? "enabled" : "disabled") on display \(tID)" : "Failed to toggle HDR on display \(tID)")
+
+        case .setProfile(let target, let profileName):
+            let tID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
+            let profiles = ColorProfileController.shared.enumerateProfiles()
+            guard let matched = profiles.first(where: { $0.name.localizedCaseInsensitiveContains(profileName) }) else {
+                return (false, "Color profile '\(profileName)' not found")
+            }
+            let ok = ColorProfileController.shared.setProfile(matched, for: tID)
+            return (ok, ok ? "Applied color profile '\(matched.name)' to display \(tID)" : "Failed to apply color profile")
+
+        case .listProfiles:
+            let profiles = ColorProfileController.shared.enumerateProfiles()
+            let names = profiles.map { $0.name }.joined(separator: ", ")
+            return (true, names.isEmpty ? "No ICC profiles found" : names)
+
         case .unknown(let cmd):
             return (false, "Unknown command: \(cmd)")
         }
