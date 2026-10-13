@@ -138,19 +138,28 @@ public struct AppMenuView: View {
 
             // Action Pills (RGB Fix, 10-bit, XDR)
             HStack(spacing: 8) {
-                Toggle(isOn: $item.isForceRGBActive) {
+                Toggle(isOn: Binding(
+                    get: { item.isForceRGBActive },
+                    set: { item.isForceRGBActive = $0 }
+                )) {
                     Text("RGB 4:4:4")
                         .font(.caption2)
                 }
                 .toggleStyle(.button)
 
-                Toggle(isOn: $item.is10BitActive) {
+                Toggle(isOn: Binding(
+                    get: { item.is10BitActive },
+                    set: { item.is10BitActive = $0 }
+                )) {
                     Text("10-Bit Color")
                         .font(.caption2)
                 }
                 .toggleStyle(.button)
 
-                Toggle(isOn: $item.isXDROverdriveEnabled) {
+                Toggle(isOn: Binding(
+                    get: { item.isXDROverdriveEnabled },
+                    set: { item.isXDROverdriveEnabled = $0 }
+                )) {
                     Text("XDR 1600 Nits")
                         .font(.caption2)
                 }

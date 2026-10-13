@@ -97,7 +97,7 @@ public final class DisplayPresetManager: @unchecked Sendable {
     /// Pure JSON decoding and merging into presets
     public func importUserPresets(from data: Data) -> Bool {
         let decoder = JSONDecoder()
-        guard let decoded = try? decoder.decode([DisplayPreset].self, data) else {
+        guard let decoded = try? decoder.decode([DisplayPreset].self, from: data) else {
             return false
         }
 

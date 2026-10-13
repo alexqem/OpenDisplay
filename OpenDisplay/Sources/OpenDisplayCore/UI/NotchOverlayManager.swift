@@ -16,7 +16,9 @@ public final class NotchOverlayManager {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.repositionOverlays()
+            Task { @MainActor [weak self] in
+                self?.repositionOverlays()
+            }
         }
     }
 
