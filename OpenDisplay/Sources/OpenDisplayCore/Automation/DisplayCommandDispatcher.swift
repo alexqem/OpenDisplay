@@ -1,7 +1,7 @@
 import Foundation
 import CoreGraphics
 
-/// Unified Command Dispatcher: Single source of truth for CLI, HTTP, Menu Bar, and Hotkey commands
+/// Unified Command Dispatcher: Single source of truth for CLI, UI, Menu Bar, and Hotkey commands
 public final class DisplayCommandDispatcher: @unchecked Sendable {
     public static let shared = DisplayCommandDispatcher()
 
@@ -28,15 +28,51 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
 
     /// Read brightness for a target display
     public func getBrightness(displayID: CGDirectDisplayID) -> Float? {
-        if let val = AppleDisplayServicesBridge.shared.getBrightness(displayID: displayID) {
-            return val
-        }
-        return nil
+        return AppleDisplayServicesBridge.shared.getBrightness(displayID: displayID)
     }
 
-    /// Create Virtual Display
+    /// Set speaker volume on an external display via DDC/CI VCP 0x62
+    public func setVolume(displayID: CGDirectDisplayID, level: Float) -> Bool {
+        let clamped = max(0.0, min(1.0, level))
+        let rawValue = UInt16((clamped * Float(DDCProtocolLimits.vcpPercentScale)).rounded())
+        guard let service = IOAVServiceMatcher.service(for: displayID),
+              let ddc = IOAVServiceDDC(service: service) else {
+            return false
+        }
+        return ddc.setVCP(code: .audioSpeakerVolume, value: rawValue)
+    }
+
+    /// Engage or release hardware audio mute via DDC/CI VCP 0x8D
+    public func setMuted(displayID: CGDirectDisplayID, muted: Bool) -> Bool {
+        let rawValue = muted ? DDCProtocolLimits.audioMuteEngaged : DDCProtocolLimits.audioMuteReleased
+        guard let service = IOAVServiceMatcher.service(for: displayID),
+              let ddc = IOAVServiceDDC(service: service) else {
+            return false
+        }
+        return ddc.setVCP(code: .audioMute, value: rawValue)
+    }
+
+    /// Create a Virtual Display and register it in the lifecycle manager
     public func createVirtual(config: VirtualDisplayConfig) -> VirtualDisplayController? {
-        return VirtualDisplayController(config: config)
+        guard let controller = VirtualDisplayController(config: config) else { return nil }
+        VirtualDisplayManager.shared.register(controller)
+        return controller
+    }
+
+    /// Tear down a registered Virtual Display
+    @discardableResult
+    public func removeVirtual(displayID: CGDirectDisplayID) -> Bool {
+        return VirtualDisplayManager.shared.remove(displayID: displayID)
+    }
+
+    /// Whether a display ID belongs to a registered Virtual Display
+    public func isVirtual(displayID: CGDirectDisplayID) -> Bool {
+        return VirtualDisplayManager.shared.contains(displayID: displayID)
+    }
+
+    /// Compact descriptor list of active virtual displays for UI chips
+    public func virtualDisplayDescriptors() -> [(id: CGDirectDisplayID, name: String)] {
+        return VirtualDisplayManager.shared.allControllers().map { ($0.displayID, $0.config.name) }
     }
 
     /// Force RGB color mode
@@ -67,6 +103,92 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
     /// Reconnect display
     public func reconnect(displayID: CGDirectDisplayID) -> Bool {
         return DisplayPowerStateController.shared.reconnectDisplay(displayID: displayID)
+    }
+
+    /// Toggle HDR mode on a display
+    public func setHDR(displayID: CGDirectDisplayID, enabled: Bool) -> Bool {
+        return ColorDepthController.shared.setHDREnabled(displayID: displayID, enabled: enabled)
+    }
+
+    /// Query live HDR state of a display
+    public func isHDREnabled(displayID: CGDirectDisplayID) -> Bool {
+        return ColorDepthController.shared.isHDREnabled(displayID: displayID)
+    }
+
+    /// Query whether the active pixel encoding is 10-Bit Deep Color
+    public func is10BitColorActive(displayID: CGDirectDisplayID) -> Bool {
+        return ColorDepthController.shared.is10BitColorActive(displayID: displayID)
+    }
+
+    /// Enumerate all system ICC color profiles
+    public func availableColorProfiles() -> [ICCProfileInfo] {
+        return ColorProfileController.shared.enumerateProfiles()
+    }
+
+    /// Apply an ICC color profile by case-insensitive name substring
+    public func setColorProfile(named profileName: String, for displayID: CGDirectDisplayID) -> Bool {
+        let profiles = availableColorProfiles()
+        guard let matched = profiles.first(where: { $0.name.localizedCaseInsensitiveContains(profileName) }) else {
+            return false
+        }
+        return ColorProfileController.shared.setProfile(matched, for: displayID)
+    }
+
+    /// Apply a preset snapshot: restores arrangement origins and brightness for every resolvable entry
+    @discardableResult
+    public func applyPreset(_ preset: DisplayPreset) -> Int {
+        var appliedCount = 0
+        for entry in preset.displays {
+            guard let displayID = DisplayInventory.displayID(forUUIDString: entry.displayUUID) else { continue }
+            if let x = entry.arrangementX, let y = entry.arrangementY {
+                _ = DisplayArrangementController.setDisplayOrigin(displayID: displayID, x: x, y: y)
+            }
+            if let brightness = entry.brightness {
+                _ = setBrightness(displayID: displayID, level: Float(brightness))
+            }
+            appliedCount += 1
+        }
+        return appliedCount
+    }
+
+    /// Toggle Night Shift via CoreBrightness bridge
+    public func setNightShift(enabled: Bool) -> Bool {
+        do {
+            try NightShiftTrueToneBridge.shared.setNightShift(enabled: enabled)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// Toggle True Tone via CoreBrightness bridge (supported Macs only)
+    public func setTrueTone(enabled: Bool) -> Bool {
+        do {
+            try NightShiftTrueToneBridge.shared.setTrueTone(enabled: enabled)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// Start floating Picture-in-Picture streaming for a display
+    public func startPip(displayID: CGDirectDisplayID) -> Bool {
+        guard #available(macOS 12.3, *) else { return false }
+        guard !PipStreamManager.shared.isActive else { return false }
+        PipStreamManager.shared.start(displayID: displayID)
+        return true
+    }
+
+    /// Stop the active Picture-in-Picture stream
+    public func stopPip() {
+        guard #available(macOS 12.3, *) else { return }
+        PipStreamManager.shared.stop()
+    }
+
+    /// Whether a PiP stream is currently active
+    public func isPipActive() -> Bool {
+        guard #available(macOS 12.3, *) else { return false }
+        return PipStreamManager.shared.isActive
     }
 
     /// Execute parsed CLICommand directly against display controllers
@@ -129,7 +251,8 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
             return (ok, ok ? "Reconnected display \(tID)" : "Failed to reconnect display")
 
         case .listPresets:
-            return (true, "Default Native, Work 4K Setup")
+            let names = DisplayPresetManager.shared.getAllPresets().map { $0.name }
+            return (true, names.isEmpty ? "No presets" : names.joined(separator: ", "))
 
         case .forceRGB(let target):
             let tID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
@@ -138,20 +261,16 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
 
         case .setHDR(let target, let enabled):
             let tID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
-            let ok = ColorDepthController.shared.setHDREnabled(displayID: tID, enabled: enabled)
+            let ok = setHDR(displayID: tID, enabled: enabled)
             return (ok, ok ? "Set HDR \(enabled ? "enabled" : "disabled") on display \(tID)" : "Failed to toggle HDR on display \(tID)")
 
         case .setProfile(let target, let profileName):
             let tID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
-            let profiles = ColorProfileController.shared.enumerateProfiles()
-            guard let matched = profiles.first(where: { $0.name.localizedCaseInsensitiveContains(profileName) }) else {
-                return (false, "Color profile '\(profileName)' not found")
-            }
-            let ok = ColorProfileController.shared.setProfile(matched, for: tID)
-            return (ok, ok ? "Applied color profile '\(matched.name)' to display \(tID)" : "Failed to apply color profile")
+            let ok = setColorProfile(named: profileName, for: tID)
+            return (ok, ok ? "Applied color profile '\(profileName)' to display \(tID)" : "Failed to apply color profile")
 
         case .listProfiles:
-            let profiles = ColorProfileController.shared.enumerateProfiles()
+            let profiles = availableColorProfiles()
             let names = profiles.map { $0.name }.joined(separator: ", ")
             return (true, names.isEmpty ? "No ICC profiles found" : names)
 

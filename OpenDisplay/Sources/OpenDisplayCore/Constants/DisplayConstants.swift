@@ -80,6 +80,7 @@ public enum MediaKeyConstants {
     public static let keyStateDown: Int = 0x0A
     public static let keyCodeShift: Int = 16
     public static let keyStateShift: Int = 8
+    public static let brightnessStep: Double = 0.05
 }
 
 /// Constants for Display Arrangement and Canvas Positioning

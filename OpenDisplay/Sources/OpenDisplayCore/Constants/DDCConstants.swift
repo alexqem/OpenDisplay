@@ -51,4 +51,7 @@ public enum DDCProtocolLimits {
     public static let standardReplyMinLength: Int = 11
     public static let readReplyBufferSize: Int = 12
     public static let resultCodeSuccess: UInt8 = 0x00
+    public static let vcpPercentScale: UInt16 = 100
+    public static let audioMuteEngaged: UInt16 = 1
+    public static let audioMuteReleased: UInt16 = 2
 }

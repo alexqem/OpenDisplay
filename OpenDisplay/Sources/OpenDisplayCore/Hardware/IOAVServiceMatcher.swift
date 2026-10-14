@@ -58,6 +58,19 @@ public enum IOAVServiceMatcher {
         return results
     }
 
+    /// Resolve the IOKit AV service backing a specific CoreGraphics display via EDID vendor/model matching
+    public static func service(for displayID: CGDirectDisplayID) -> io_service_t? {
+        let vendor = CGDisplayVendorNumber(displayID)
+        let model = CGDisplayModelNumber(displayID)
+        guard vendor != 0, model != 0 else { return nil }
+        return discoverServices().first(where: { candidate in
+            guard let candidateVendor = candidate.vendorID, let candidateProduct = candidate.productID else {
+                return false
+            }
+            return candidateVendor == vendor && candidateProduct == model
+        })?.service
+    }
+
     /// Walk parent chain up to 8 levels to extract DisplayVendorID and DisplayProductID
     public static func extractVendorAndProduct(for service: io_service_t) -> (vendorID: UInt32?, productID: UInt32?) {
         var current = service

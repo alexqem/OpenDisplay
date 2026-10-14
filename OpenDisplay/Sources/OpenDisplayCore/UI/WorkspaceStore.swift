@@ -1,0 +1,339 @@
+#if os(macOS) && arch(arm64)
+import AppKit
+import SwiftUI
+import Combine
+import UniformTypeIdentifiers
+import CoreGraphics
+
+/// Identifiable chip descriptor of a live virtual display for UI lists
+public struct VirtualDisplayChip: Identifiable, Equatable {
+    public let id: CGDirectDisplayID
+    public let name: String
+
+    public init(id: CGDirectDisplayID, name: String) {
+        self.id = id
+        self.name = name
+    }
+}
+
+/// Single UI-facing store: every mutation routes through DisplayCommandDispatcher (DRY)
+@MainActor
+public final class WorkspaceStore: ObservableObject {
+    public static let shared = WorkspaceStore()
+
+    @Published public private(set) var displays: [DisplayItemModel] = []
+    @Published public private(set) var presets: [DisplayPreset] = []
+    @Published public private(set) var virtualDisplays: [VirtualDisplayChip] = []
+    @Published public private(set) var isTrueToneSupported: Bool = false
+
+    @Published public var selectedAspect: DisplayAspectPreset = .ratio16_9
+    @Published public var selectedRefreshRate: Double = VirtualDisplayLimits.defaultRefreshRate
+    @Published public var isHiDPIEnabled: Bool = true
+    @Published public var isNightShiftOn: Bool = false
+    @Published public var isTrueToneOn: Bool = false
+    @Published public var isAmbientSyncOn: Bool = false
+    @Published public var ambientSensitivity: Double = AutoBrightnessConstants.defaultSensitivity
+    @Published public var isMediaKeysOn: Bool = false
+    @Published public var isLaunchAtLoginOn: Bool = false
+    @Published public var isPipOn: Bool = false
+    @Published public var pipDisplayID: CGDirectDisplayID?
+
+    public let colorProfiles: [ICCProfileInfo]
+
+    private let dispatcher = DisplayCommandDispatcher.shared
+    private let mediaKeysListener = MediaKeysListener()
+
+    private init() {
+        colorProfiles = dispatcher.availableColorProfiles()
+        reloadPresets()
+        isTrueToneSupported = NightShiftTrueToneBridge.shared.isTrueToneSupported
+        isLaunchAtLoginOn = LaunchAtLoginController.shared.isEnabled
+        mediaKeysListener.onAction = { [weak self] action in
+            Task { @MainActor [weak self] in
+                self?.handleMediaKey(action)
+            }
+        }
+        refresh()
+    }
+
+    // MARK: - Refresh
+
+    /// Re-enumerate displays and refresh live per-display state, preserving local slider values
+    public func refresh() {
+        var refreshed: [DisplayItemModel] = []
+        for info in DisplayInventory.currentDisplays() {
+            let model = displays.first(where: { $0.id == info.id }) ?? makeModel(from: info)
+            model.isHDREnabled = dispatcher.isHDREnabled(displayID: info.id)
+            model.is10BitActive = dispatcher.is10BitColorActive(displayID: info.id)
+            model.isMirrored = DisplayMirrorController.isMirroring(info.id)
+            model.isDisconnected = DisplayPowerStateController.shared.isDisconnected(displayID: info.id)
+            refreshed.append(model)
+        }
+        displays = refreshed
+        virtualDisplays = dispatcher.virtualDisplayDescriptors().map { VirtualDisplayChip(id: $0.id, name: $0.name) }
+        isPipOn = dispatcher.isPipActive()
+    }
+
+    private func makeModel(from info: DisplayInventoryInfo) -> DisplayItemModel {
+        let brightness = dispatcher.getBrightness(displayID: info.id) ?? Float(DisplayItemModel.defaultBrightness)
+        return DisplayItemModel(
+            id: info.id,
+            name: info.name,
+            brightness: Double(brightness),
+            isBuiltin: info.isBuiltin,
+            isVirtual: dispatcher.isVirtual(displayID: info.id),
+            isHiDPI: info.isHiDPI,
+            pixelWidth: info.pixelWidth,
+            pixelHeight: info.pixelHeight
+        )
+    }
+
+    // MARK: - Per-Display Controls
+
+    public func setBrightness(_ item: DisplayItemModel, _ value: Double) {
+        item.brightness = value
+        _ = dispatcher.setBrightness(displayID: item.id, level: Float(value))
+    }
+
+    public func setVolume(_ item: DisplayItemModel, _ value: Double) {
+        item.volume = value
+        if item.isMuted && value > 0 {
+            item.isMuted = false
+            item.volumeBeforeMute = nil
+        }
+        _ = dispatcher.setVolume(displayID: item.id, level: Float(value))
+    }
+
+    public func toggleMute(_ item: DisplayItemModel) {
+        if item.isMuted {
+            let restore = item.volumeBeforeMute ?? DisplayItemModel.defaultVolume
+            item.isMuted = false
+            item.volume = restore
+            item.volumeBeforeMute = nil
+            _ = dispatcher.setVolume(displayID: item.id, level: Float(restore))
+        } else {
+            item.volumeBeforeMute = item.volume
+            item.isMuted = true
+            item.volume = 0
+            _ = dispatcher.setMuted(displayID: item.id, muted: true)
+        }
+    }
+
+    public func toggleForceRGB(_ item: DisplayItemModel) {
+        if item.isForceRGBActive {
+            item.isForceRGBActive = false
+            return
+        }
+        if dispatcher.forceRGB(service: io_service_t(item.id)) {
+            item.isForceRGBActive = true
+        }
+    }
+
+    public func toggleHDR(_ item: DisplayItemModel) {
+        let target = !item.isHDREnabled
+        if dispatcher.setHDR(displayID: item.id, enabled: target) {
+            item.isHDREnabled = target
+        }
+    }
+
+    public func rotate(_ item: DisplayItemModel, to angle: DisplayRotationAngle) {
+        if dispatcher.setRotation(displayID: item.id, angle: angle) {
+            item.rotation = angle
+        }
+        refresh()
+    }
+
+    public func setMirror(_ item: DisplayItemModel, from source: CGDirectDisplayID?) {
+        if let source {
+            _ = dispatcher.setMirror(sourceID: source, targetID: item.id)
+        } else {
+            _ = dispatcher.disableMirror(displayID: item.id)
+        }
+        refresh()
+    }
+
+    public func togglePowerConnection(_ item: DisplayItemModel) {
+        if item.isDisconnected {
+            _ = dispatcher.reconnect(displayID: item.id)
+        } else {
+            _ = dispatcher.disconnect(displayID: item.id)
+        }
+        refresh()
+    }
+
+    public func applyColorProfile(_ item: DisplayItemModel, _ profile: ICCProfileInfo?) {
+        guard let profile else {
+            item.colorProfileName = nil
+            return
+        }
+        if ColorProfileController.shared.setProfile(profile, for: item.id) {
+            item.colorProfileName = profile.name
+        }
+    }
+
+    // MARK: - Presets
+
+    public func reloadPresets() {
+        presets = DisplayPresetManager.shared.getAllPresets()
+    }
+
+    public func applyPreset(_ preset: DisplayPreset) {
+        dispatcher.applyPreset(preset)
+        refresh()
+    }
+
+    public func saveCurrentStateAsPreset(named name: String) {
+        let entries = displays.compactMap { model -> DisplayPresetEntry? in
+            guard let uuid = DisplayInventory.uuidString(for: model.id) else { return nil }
+            let bounds = CGDisplayBounds(model.id)
+            return DisplayPresetEntry(
+                displayUUID: uuid,
+                width: model.pixelWidth,
+                height: model.pixelHeight,
+                isHiDPI: model.isHiDPI,
+                brightness: model.brightness,
+                arrangementX: Int32(bounds.origin.x),
+                arrangementY: Int32(bounds.origin.y)
+            )
+        }
+        guard !entries.isEmpty else { return }
+        DisplayPresetManager.shared.addPreset(DisplayPreset(name: name, displays: entries))
+        reloadPresets()
+    }
+
+    public func deletePreset(_ preset: DisplayPreset) {
+        _ = DisplayPresetManager.shared.removePreset(id: preset.id)
+        reloadPresets()
+    }
+
+    public func importPresets() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.allowedContentTypes = [.json]
+        guard panel.runModal() == .OK, let url = panel.url, let data = try? Data(contentsOf: url) else { return }
+        _ = DisplayPresetManager.shared.importUserPresets(from: data)
+        reloadPresets()
+    }
+
+    public func exportPresets() {
+        guard let data = DisplayPresetManager.shared.exportUserPresetsJSON() else { return }
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.json]
+        panel.nameFieldStringValue = "OpenDisplayPresets"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        try? data.write(to: url)
+    }
+
+    // MARK: - Virtual Displays
+
+    public func createVirtualDisplay() {
+        let name = "Virtual \(selectedAspect.rawValue) \(Int(selectedRefreshRate))Hz"
+        let config = VirtualDisplayConfig(
+            name: name,
+            aspectPreset: selectedAspect,
+            refreshRate: selectedRefreshRate,
+            isHiDPI: isHiDPIEnabled
+        )
+        guard dispatcher.createVirtual(config: config) != nil else { return }
+        refresh()
+    }
+
+    public func removeVirtualDisplay(id: CGDirectDisplayID) {
+        dispatcher.removeVirtual(displayID: id)
+        refresh()
+    }
+
+    // MARK: - System
+
+    public func toggleNightShift() {
+        let target = !isNightShiftOn
+        if dispatcher.setNightShift(enabled: target) {
+            isNightShiftOn = target
+        }
+    }
+
+    public func toggleTrueTone() {
+        let target = !isTrueToneOn
+        if dispatcher.setTrueTone(enabled: target) {
+            isTrueToneOn = target
+        }
+    }
+
+    public func setAmbientSync(_ enabled: Bool) {
+        isAmbientSyncOn = enabled
+        if enabled {
+            AmbientBrightnessSyncEngine.shared.sensitivity = ambientSensitivity
+            AmbientBrightnessSyncEngine.shared.startSync { [weak self] builtin in
+                Task { @MainActor [weak self] in
+                    self?.propagateAmbientBrightness(builtin)
+                }
+            }
+        } else {
+            AmbientBrightnessSyncEngine.shared.stopSync()
+        }
+    }
+
+    public func setAmbientSensitivity(_ value: Double) {
+        ambientSensitivity = value
+        AmbientBrightnessSyncEngine.shared.sensitivity = value
+    }
+
+    private func propagateAmbientBrightness(_ builtinBrightness: Double) {
+        let target = BrightnessSyncCalculator.computeTargetBrightness(
+            builtinBrightness: builtinBrightness,
+            sensitivity: ambientSensitivity
+        )
+        for model in displays where !model.isBuiltin && !model.isVirtual {
+            setBrightness(model, target)
+        }
+    }
+
+    public func setMediaKeys(_ enabled: Bool) {
+        isMediaKeysOn = enabled
+        if enabled {
+            mediaKeysListener.startListening()
+        } else {
+            mediaKeysListener.stopListening()
+        }
+    }
+
+    private func handleMediaKey(_ action: MediaKeyAction) {
+        switch action {
+        case .brightnessUp:
+            nudgeBrightness(by: MediaKeyConstants.brightnessStep)
+        case .brightnessDown:
+            nudgeBrightness(by: -MediaKeyConstants.brightnessStep)
+        case .volumeUp, .volumeDown, .mute:
+            break
+        }
+    }
+
+    private func nudgeBrightness(by delta: Double) {
+        guard let model = displays.first(where: { $0.isBuiltin }) ?? displays.first else { return }
+        setBrightness(model, min(1.0, max(0.0, model.brightness + delta)))
+    }
+
+    public func toggleLaunchAtLogin() {
+        isLaunchAtLoginOn = LaunchAtLoginController.shared.toggle()
+    }
+
+    public func togglePip(for displayID: CGDirectDisplayID) {
+        if isPipOn {
+            let previousID = pipDisplayID
+            dispatcher.stopPip()
+            isPipOn = false
+            pipDisplayID = nil
+            // If user clicked the same display that was active, treat as pure toggle off
+            if previousID == displayID {
+                return
+            }
+        }
+        if !dispatcher.isVirtual(displayID: displayID), dispatcher.startPip(displayID: displayID) {
+            isPipOn = true
+            pipDisplayID = displayID
+        }
+    }
+}
+#endif

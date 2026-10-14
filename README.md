@@ -62,13 +62,13 @@ OpenDisplay/
 ├── Sources/OpenDisplayCore/       # Core Implementation
 │   ├── Constants/                 # DDCConstants, DisplayConstants, ColorConstants
 │   ├── DynamicBridge/             # DynamicLibrary (dlopen/dlsym), DynamicObjCClass
-│   ├── Hardware/                  # IOAVServiceMatcher, IOAVServiceDDC, AppleDisplayServicesBridge
+│   ├── Hardware/                  # IOAVServiceMatcher, IOAVServiceDDC, AppleDisplayServicesBridge, DisplayInventory
 │   ├── Color/                     # EDIDParser, RGBForcingEngine, ColorDepthController, ColorProfileController
-│   ├── VirtualDisplay/            # VirtualDisplayController, SkyLightModeEngine, DisplayMirrorController, DisplayPresetManager, DisplayPowerStateController
+│   ├── VirtualDisplay/            # VirtualDisplayController, VirtualDisplayManager, SkyLightModeEngine, DisplayMirrorController, DisplayPresetManager, DisplayPowerStateController
 │   ├── Luminance/                 # GammaDimmingEngine, XDROverdriveEngine, NightShiftTrueToneBridge, AmbientBrightnessSyncEngine
-│   ├── Streaming/                 # PipCaptureEngine (ScreenCaptureKit), PipWindowPanel (.floating)
+│   ├── Streaming/                 # PipCaptureEngine (ScreenCaptureKit), PipStreamManager, PipWindowPanel (.floating)
 │   ├── Automation/                # OpenDisplayCLI, DisplayCommandDispatcher, LaunchAtLoginController
-│   ├── UI/                        # AppMenuView (SwiftUI), MenuBarController, MediaKeysListener, NativeOSDController, NotchOverlayManager
+│   ├── UI/                        # AppMenuView (SwiftUI), DisplayCardView, PopoverSections, AtlasTheme, AtlasComponents, WorkspaceStore, DisplayItemModel, MenuBarController, MediaKeysListener, NativeOSDController, NotchOverlayManager
 │   └── AppFeatureManager.swift    # Permanent Unrestricted Feature Engine
 └── Tests/OpenDisplayTests/        # Complete Unit Test Suite (Phase1Tests ... Phase13Tests)
 ```

@@ -54,11 +54,22 @@ public struct DisplayPreset: Codable, Equatable, Identifiable, Sendable {
 
 /// In-memory preset manager and JSON serializer/deserializer (100% testable without disk/hardware)
 public final class DisplayPresetManager: @unchecked Sendable {
+    /// Shared preset store seeded with built-in defaults
+    public static let shared = DisplayPresetManager(initialPresets: [
+        DisplayPreset(name: "Default Native", icon: PresetConstants.defaultIconName, isBuiltin: true, displays: [])
+    ])
+
     private var presets: [DisplayPreset] = []
     private let lock = NSLock()
 
     public init(initialPresets: [DisplayPreset] = []) {
         self.presets = initialPresets
+    }
+
+    /// Pure HiDPI detection from pixel vs point resolution (unit testable)
+    public static func isHiDPIMode(pixelWidth: Int, pointWidth: Int) -> Bool {
+        guard pointWidth > 0 else { return false }
+        return pixelWidth > pointWidth
     }
 
     public func getAllPresets() -> [DisplayPreset] {

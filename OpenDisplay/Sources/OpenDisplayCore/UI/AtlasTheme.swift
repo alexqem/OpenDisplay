@@ -17,6 +17,9 @@ public enum AtlasTheme {
     // Accents & Badges
     public static let electricLime = Color(red: 0xED / 255.0, green: 0xFF / 255.0, blue: 0x45 / 255.0)  // #edff45
     public static let successGreen = Color(red: 0x15 / 255.0, green: 0xA3 / 255.0, blue: 0x4A / 255.0)  // #15a34a
+    public static let successSoft = Color(red: 0xEC / 255.0, green: 0xFD / 255.0, blue: 0xF3 / 255.0)   // #ecfdf3
+    public static let warningOrange = Color(red: 0xF9 / 255.0, green: 0x73 / 255.0, blue: 0x16 / 255.0) // #f97316
+    public static let warningSoft = Color(red: 0xFF / 255.0, green: 0xFA / 255.0, blue: 0xEB / 255.0)   // #fffaeb
 
     // Neutral Surfaces & 1px Structural Borders
     public static let surfaceCard = Color(red: 0xFB / 255.0, green: 0xFB / 255.0, blue: 0xFE / 255.0)   // #fbfbfe
@@ -36,7 +39,15 @@ public enum AtlasTheme {
     public static let zeroRadius: CGFloat = 0.0
     public static let borderWidth: CGFloat = 1.0
     public static let popoverWidth: CGFloat = 400.0
+    public static let popoverHeight: CGFloat = 640.0
     public static let maxScrollHeight: CGFloat = 400.0
     public static let pickerWidth: CGFloat = 120.0
+    public static let pickerNarrowWidth: CGFloat = 72.0
+    public static let sectionSpacing: CGFloat = 18.0
+    public static let blueprintGridSpacing: CGFloat = 18.0
+    public static let iconButtonSide: CGFloat = 22.0
+    public static let pillCornerRadius: CGFloat = 9999.0
+    public static let inlineSliderWidth: CGFloat = 90.0
+    public static let percentLabelWidth: CGFloat = 30.0
 }
 #endif

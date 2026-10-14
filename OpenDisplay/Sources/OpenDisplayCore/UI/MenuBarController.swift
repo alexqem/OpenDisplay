@@ -23,7 +23,7 @@ public final class MenuBarController: NSObject {
     }
 
     private func setupPopover() {
-        popover.contentSize = NSSize(width: 380, height: 480)
+        popover.contentSize = NSSize(width: AtlasTheme.popoverWidth, height: AtlasTheme.popoverHeight)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(rootView: AppMenuView())
     }
