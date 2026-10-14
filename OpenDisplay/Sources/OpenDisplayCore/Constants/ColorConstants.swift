@@ -31,6 +31,16 @@ public enum EDIDConstants {
         public static let byteIndexInBlock: Int = 3
         public static let ycbcr444Mask: UInt8 = 1 << 5
         public static let ycbcr422Mask: UInt8 = 1 << 4
+        public static let basicAudioMask: UInt8 = 1 << 6
+        public static let underscanMask: UInt8 = 1 << 7
+    }
+
+    /// HDMI Vendor-Specific Data Block (IEEE Registration Identifier 0x000C03)
+    public enum HDMIVSDBConstants {
+        public static let ieeeRegistrationByte0: UInt8 = 0x03
+        public static let ieeeRegistrationByte1: UInt8 = 0x0C
+        public static let ieeeRegistrationByte2: UInt8 = 0x00
+        public static let vsdbTagCode: UInt8 = 0x03
     }
 }
 

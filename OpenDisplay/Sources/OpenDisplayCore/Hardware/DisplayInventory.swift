@@ -50,6 +50,49 @@ public enum DisplayInventory {
         }
     }
 
+    /// Probe and parse hardware capabilities (HDMI VSDB, YCbCr, HDR, Deep Color) for a display
+    public static func probeCapabilities(for displayID: CGDirectDisplayID) -> DisplayCapabilities {
+        if CGDisplayIsBuiltin(displayID) != 0 {
+            return DisplayCapabilities(
+                isHDMI: false,
+                supportsYCbCr444: false,
+                supportsYCbCr422: false,
+                supportsBasicAudio: true,
+                supportsUnderscan: false,
+                supports10BitDeepColor: ColorDepthController.shared.is10BitColorActive(displayID: displayID),
+                supportsHDR: ColorDepthController.shared.supportsHDR(displayID: displayID),
+                supportsDDC: false
+            )
+        }
+
+        guard let service = IOAVServiceMatcher.service(for: displayID) else {
+            return DisplayCapabilities.fallback
+        }
+
+        var caps = DisplayCapabilities.fallback
+        if let edidBytes = IOAVServiceMatcher.extractEDIDBytes(for: service),
+           let parsed = EDIDParser.parse(bytes: edidBytes) {
+            caps = parsed.capabilities
+        }
+
+        // Augment with live SkyLight / ColorDepth queries
+        let is10Bit = ColorDepthController.shared.is10BitColorActive(displayID: displayID)
+        let supportsHDR = ColorDepthController.shared.supportsHDR(displayID: displayID)
+        let hasDDC = IOAVServiceDDC(service: service) != nil
+
+        return DisplayCapabilities(
+            isHDMI: caps.isHDMI,
+            supportsYCbCr444: caps.supportsYCbCr444,
+            supportsYCbCr422: caps.supportsYCbCr422,
+            supportsBasicAudio: caps.supportsBasicAudio,
+            supportsUnderscan: caps.supportsUnderscan,
+            supports10BitDeepColor: is10Bit || caps.supports10BitDeepColor,
+            supportsHDR: supportsHDR || caps.supportsHDR,
+            supportsDDC: hasDDC,
+            physicalAddress: caps.physicalAddress
+        )
+    }
+
     /// Stable CoreGraphics UUID string for a display (preset persistence identity)
     public static func uuidString(for displayID: CGDirectDisplayID) -> String? {
         guard let rawUUID = CGDisplayCreateUUIDFromDisplayID(displayID) else { return nil }

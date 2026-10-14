@@ -3,7 +3,7 @@ import SwiftUI
 import AppKit
 import CoreGraphics
 
-/// Per-display control card: luminance, volume, color pills, and geometry actions
+/// Per-display control card: luminance, volume, color pills, detected HDMI capabilities, and geometry actions
 /// Styled with Swiss Neo-Brutalist rigor (Atlas/TypeUI)
 public struct DisplayCardView: View {
     @ObservedObject public var item: DisplayItemModel
@@ -20,6 +20,7 @@ public struct DisplayCardView: View {
         VStack(alignment: .leading, spacing: 10) {
             headerRow
             hardwareStatusBadgeRow
+            detectedHdmiCapabilitiesRow
             luminanceRow
             volumeRow
 
@@ -95,12 +96,46 @@ public struct DisplayCardView: View {
                 AtlasBadge("APPLE DISPLAYSERVICES", style: .brand)
             } else if item.isVirtual {
                 AtlasBadge("COREDISPLAY VIRTUAL", style: .lime)
+            } else if item.capabilities.isHDMI {
+                AtlasBadge("HDMI-SINK DETECTED", style: .success)
             } else if IOAVServiceMatcher.service(for: item.id) != nil {
-                AtlasBadge("DDC/CI I2C READY", style: .success)
+                AtlasBadge("DISPLAYPORT / DDC READY", style: .success)
             } else {
                 AtlasBadge("GAMMA LUT ONLY", style: .warning)
             }
+
+            if let addr = item.capabilities.physicalAddress {
+                AtlasBadge("CEC: \(addr)", style: .muted)
+            }
+
             Spacer()
+        }
+    }
+
+    // MARK: - Autodetected HDMI / EDID Capabilities Strip
+    @ViewBuilder
+    private var detectedHdmiCapabilitiesRow: some View {
+        if !item.isBuiltin && !item.isVirtual {
+            HStack(spacing: 6) {
+                Text("CAPS:")
+                    .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
+                    .foregroundColor(AtlasTheme.textMuted)
+
+                if item.capabilities.supportsYCbCr444 || item.capabilities.supportsYCbCr422 {
+                    AtlasBadge("YUV/YCbCr", style: .brand)
+                }
+                if item.capabilities.supportsBasicAudio {
+                    AtlasBadge("AUDIO", style: .muted)
+                }
+                if item.capabilities.supports10BitDeepColor {
+                    AtlasBadge("10-BIT", style: .success)
+                }
+                if item.capabilities.supportsHDR {
+                    AtlasBadge("HDR10", style: .lime)
+                }
+                Spacer()
+            }
+            .padding(.vertical, 2)
         }
     }
 
@@ -207,18 +242,36 @@ public struct DisplayCardView: View {
         }
     }
 
-    // MARK: - Row 1: Color Space, Pixel Formats & ICC Profile
+    // MARK: - Row 1: Smooth Switches for RGB 4:4:4 & HDR + ICC Menu
     private var colorPillsAndProfileRow: some View {
-        HStack(spacing: 6) {
-            AtlasPillButton(title: "RGB 4:4:4", isActive: item.isForceRGBActive) {
-                store.toggleForceRGB(item)
+        HStack(spacing: 12) {
+            // RGB 4:4:4 Forcing Switch
+            HStack(spacing: 5) {
+                AtlasSwitch(
+                    isOn: Binding(
+                        get: { item.isForceRGBActive },
+                        set: { _ in store.toggleForceRGB(item) }
+                    ),
+                    activeColor: AtlasTheme.cobalt
+                )
+                Text("RGB 4:4:4")
+                    .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
+                    .foregroundColor(item.isForceRGBActive ? AtlasTheme.textPrimary : AtlasTheme.textMuted)
             }
 
-            AtlasPillButton(title: "HDR", isActive: item.isHDREnabled) {
-                store.toggleHDR(item)
+            // HDR Switch
+            HStack(spacing: 5) {
+                AtlasSwitch(
+                    isOn: Binding(
+                        get: { item.isHDREnabled },
+                        set: { _ in store.toggleHDR(item) }
+                    ),
+                    activeColor: AtlasTheme.successGreen
+                )
+                Text("HDR")
+                    .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
+                    .foregroundColor(item.isHDREnabled ? AtlasTheme.textPrimary : AtlasTheme.textMuted)
             }
-
-            AtlasBadge("10-BIT", style: item.is10BitActive ? .success : .muted)
 
             Spacer()
 

@@ -193,6 +193,42 @@ public struct AtlasDivider: View {
     }
 }
 
+/// High-precision Swiss Neo-Brutalist toggle switch with smooth animated feedback
+public struct AtlasSwitch: View {
+    @Binding public var isOn: Bool
+    public let activeColor: Color
+
+    public init(isOn: Binding<Bool>, activeColor: Color = AtlasTheme.cobalt) {
+        self._isOn = isOn
+        self.activeColor = activeColor
+    }
+
+    public var body: some View {
+        Button(action: {
+            withAnimation(.easeInOut(duration: 0.16)) {
+                isOn.toggle()
+            }
+        }) {
+            ZStack(alignment: isOn ? .trailing : .leading) {
+                // Background Track: Sharp 0px border, high contrast
+                Rectangle()
+                    .fill(isOn ? activeColor : AtlasTheme.surfaceCard)
+                    .frame(width: 32, height: 18)
+                    .overlay(
+                        Rectangle().stroke(isOn ? activeColor : AtlasTheme.borderMedium, lineWidth: AtlasTheme.borderWidth)
+                    )
+
+                // Slider Thumb: Sharp 0px square block
+                Rectangle()
+                    .fill(isOn ? Color.white : AtlasTheme.textMuted)
+                    .frame(width: 14, height: 14)
+                    .padding(2)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 /// Labeled system toggle row with optional trailing accessory (slider, picker)
 public struct AtlasToggleRow<Trailing: View>: View {
     public let title: String
@@ -225,10 +261,7 @@ public struct AtlasToggleRow<Trailing: View>: View {
                 .foregroundColor(AtlasTheme.textBody)
             Spacer()
             trailing
-            Toggle("", isOn: $isOn)
-                .labelsHidden()
-                .toggleStyle(.switch)
-                .controlSize(.mini)
+            AtlasSwitch(isOn: $isOn)
         }
     }
 }

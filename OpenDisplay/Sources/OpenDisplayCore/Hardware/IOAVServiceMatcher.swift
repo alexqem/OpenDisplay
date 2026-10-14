@@ -93,6 +93,38 @@ public enum IOAVServiceMatcher {
         return (nil, nil)
     }
 
+    /// Extract raw EDID bytes from IOKit registry property "IODisplayEDID" or "EDID"
+    public static func extractEDIDBytes(for service: io_service_t) -> [UInt8]? {
+        var current = service
+        IOObjectRetain(current)
+        defer { IOObjectRelease(current) }
+
+        for _ in 0..<maxParentLevels {
+            if let edidData = readRegistryData(entry: current, key: "IODisplayEDID") ?? readRegistryData(entry: current, key: "EDID") {
+                return [UInt8](edidData)
+            }
+
+            var parent: io_service_t = 0
+            let kr = IORegistryEntryGetParentEntry(current, kIOServicePlane, &parent)
+            guard kr == KERN_SUCCESS, parent != 0 else { break }
+            IOObjectRelease(current)
+            current = parent
+        }
+
+        return nil
+    }
+
+    private static func readRegistryData(entry: io_service_t, key: String) -> Data? {
+        guard let prop = IORegistryEntryCreateCFProperty(entry, key as CFString, kCFAllocatorDefault, 0) else {
+            return nil
+        }
+        let val = prop.takeRetainedValue()
+        if let data = val as? Data {
+            return data
+        }
+        return nil
+    }
+
     private static func readRegistryUInt32(entry: io_service_t, key: String) -> UInt32? {
         guard let prop = IORegistryEntryCreateCFProperty(entry, key as CFString, kCFAllocatorDefault, 0) else {
             return nil

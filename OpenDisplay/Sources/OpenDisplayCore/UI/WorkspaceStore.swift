@@ -71,6 +71,7 @@ public final class WorkspaceStore: ObservableObject {
             model.is10BitActive = dispatcher.is10BitColorActive(displayID: info.id)
             model.isMirrored = DisplayMirrorController.isMirroring(info.id)
             model.isDisconnected = DisplayPowerStateController.shared.isDisconnected(displayID: info.id)
+            model.capabilities = DisplayInventory.probeCapabilities(for: info.id)
             refreshed.append(model)
         }
         displays = refreshed

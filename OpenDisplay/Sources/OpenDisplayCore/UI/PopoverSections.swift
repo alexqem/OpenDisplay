@@ -113,10 +113,7 @@ public struct VirtualSectionView: View {
                 Text("HiDPI")
                     .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
                     .foregroundColor(AtlasTheme.textBody)
-                Toggle("", isOn: $store.isHiDPIEnabled)
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                    .controlSize(.mini)
+                AtlasSwitch(isOn: $store.isHiDPIEnabled, activeColor: AtlasTheme.cobalt)
 
                 Spacer()
 

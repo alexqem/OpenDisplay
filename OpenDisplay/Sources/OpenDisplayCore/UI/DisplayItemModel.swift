@@ -26,6 +26,7 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
     @Published public var rotation: DisplayRotationAngle = .standard
     @Published public var colorProfileName: String?
     @Published public var volumeBeforeMute: Double?
+    @Published public var capabilities: DisplayCapabilities = .fallback
 
     public init(
         id: CGDirectDisplayID,
