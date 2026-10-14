@@ -87,12 +87,9 @@ public enum ResolutionClassifier {
         let w = width / d
         let h = height / d
 
-        // Normalize common aspect ratios to marketing standard names
-        if (w == 64 && h == 27) || (w == 43 && h == 18) {
-            return "21:9"
-        }
-        if w == 8 && h == 5 {
-            return "16:10"
+        // Normalize common aspect ratios to marketing standard names via ResolutionConstants table
+        if let label = ResolutionConstants.marketingAspectAliases[w]?[h] {
+            return label
         }
         return "\(w):\(h)"
     }
@@ -131,7 +128,7 @@ public enum ResolutionClassifier {
         } else if isHiDPI {
             // Check if scaled resolution is within recommended scale range (e.g. perfect 2x or sweet-spot HiDPI)
             let scale = pointWidth > 0 ? (Double(pixelWidth) / Double(pointWidth)) : 1.0
-            if abs(scale - ResolutionConstants.standardHiDPIScale) < 0.01 {
+            if abs(scale - ResolutionConstants.standardHiDPIScale) < ResolutionConstants.scaleEpsilon {
                 tier = .recommendedHiDPI
                 isRecommended = true
             } else if scale >= ResolutionConstants.minRecommendedScale && scale <= ResolutionConstants.maxRecommendedScale {

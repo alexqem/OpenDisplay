@@ -131,5 +131,13 @@ public enum ResolutionConstants {
     public static let standardDesktopPPI: Double = 110.0 // Standard 1x PPI
     public static let ppiTolerancePercent: Double = 0.25 // +/- 25% tolerance for optimal Retina sharpness
     public static let defaultRefreshRateThreshold: Double = 0.5 // Refresh rate epsilon
+    public static let scaleEpsilon: Double = 0.01
+
+    /// Standard marketing alias pairs for simplified aspect ratios (w, h) -> Marketing Label
+    public static let marketingAspectAliases: [Int: [Int: String]] = [
+        64: [27: "21:9"],
+        43: [18: "21:9"],
+        8:  [5:  "16:10"]
+    ]
 }
 
