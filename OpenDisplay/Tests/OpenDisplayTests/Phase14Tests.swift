@@ -59,12 +59,15 @@ final class Phase14Tests: XCTestCase {
 
     func testAtlasThemeExtendedTokens() {
         #if os(macOS) && arch(arm64)
-        XCTAssertEqual(AtlasTheme.popoverHeight, 640.0)
+        XCTAssertEqual(AtlasTheme.popoverWidth, 420.0)
+        XCTAssertEqual(AtlasTheme.popoverHeight, 660.0)
+        XCTAssertEqual(AtlasTheme.maxScrollHeight, 520.0)
         XCTAssertEqual(AtlasTheme.pickerNarrowWidth, 72.0)
-        XCTAssertEqual(AtlasTheme.sectionSpacing, 18.0)
+        XCTAssertEqual(AtlasTheme.sectionSpacing, 16.0)
         XCTAssertEqual(AtlasTheme.blueprintGridSpacing, 18.0)
         XCTAssertEqual(AtlasTheme.iconButtonSide, 22.0)
         XCTAssertEqual(AtlasTheme.pillCornerRadius, 9999.0)
+        XCTAssertEqual(AtlasTheme.percentLabelWidth, 34.0)
         #endif
     }
 
@@ -76,7 +79,8 @@ final class Phase14Tests: XCTestCase {
         XCTAssertTrue(DDCVcpCode.allCases.contains(.audioMute))
     }
 
-    func testMediaKeyBrightnessStepConstant() {
+    func testMediaKeyBrightnessStepAndDebounceConstants() {
         XCTAssertEqual(MediaKeyConstants.brightnessStep, 0.05)
+        XCTAssertEqual(MediaKeyConstants.ddcDebounceNanoseconds, 50_000_000)
     }
 }

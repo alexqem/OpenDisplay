@@ -81,6 +81,7 @@ public enum MediaKeyConstants {
     public static let keyCodeShift: Int = 16
     public static let keyStateShift: Int = 8
     public static let brightnessStep: Double = 0.05
+    public static let ddcDebounceNanoseconds: UInt64 = 50_000_000 // 50 milliseconds
 }
 
 /// Constants for Display Arrangement and Canvas Positioning

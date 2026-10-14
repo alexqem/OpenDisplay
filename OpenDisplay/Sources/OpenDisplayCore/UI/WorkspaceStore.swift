@@ -43,6 +43,10 @@ public final class WorkspaceStore: ObservableObject {
     private let dispatcher = DisplayCommandDispatcher.shared
     private let mediaKeysListener = MediaKeysListener()
 
+    // DDC I2C throttling tasks to prevent bus flooding during rapid slider motion
+    private var brightnessDebounceTasks: [CGDirectDisplayID: Task<Void, Never>] = [:]
+    private var volumeDebounceTasks: [CGDirectDisplayID: Task<Void, Never>] = [:]
+
     private init() {
         colorProfiles = dispatcher.availableColorProfiles()
         reloadPresets()
@@ -88,20 +92,48 @@ public final class WorkspaceStore: ObservableObject {
         )
     }
 
-    // MARK: - Per-Display Controls
+    // MARK: - Per-Display Controls (Throttled for DDC/I2C Stability)
 
-    public func setBrightness(_ item: DisplayItemModel, _ value: Double) {
+    public func setBrightness(_ item: DisplayItemModel, _ value: Double, immediate: Bool = false) {
         item.brightness = value
-        _ = dispatcher.setBrightness(displayID: item.id, level: Float(value))
+
+        if immediate {
+            brightnessDebounceTasks[item.id]?.cancel()
+            brightnessDebounceTasks.removeValue(forKey: item.id)
+            _ = dispatcher.setBrightness(displayID: item.id, level: Float(value))
+            return
+        }
+
+        brightnessDebounceTasks[item.id]?.cancel()
+        brightnessDebounceTasks[item.id] = Task { @MainActor [weak self, id = item.id] in
+            try? await Task.sleep(nanoseconds: MediaKeyConstants.ddcDebounceNanoseconds)
+            guard !Task.isCancelled, let self = self else { return }
+            _ = self.dispatcher.setBrightness(displayID: id, level: Float(value))
+            self.brightnessDebounceTasks.removeValue(forKey: id)
+        }
     }
 
-    public func setVolume(_ item: DisplayItemModel, _ value: Double) {
+    public func setVolume(_ item: DisplayItemModel, _ value: Double, immediate: Bool = false) {
         item.volume = value
         if item.isMuted && value > 0 {
             item.isMuted = false
             item.volumeBeforeMute = nil
         }
-        _ = dispatcher.setVolume(displayID: item.id, level: Float(value))
+
+        if immediate {
+            volumeDebounceTasks[item.id]?.cancel()
+            volumeDebounceTasks.removeValue(forKey: item.id)
+            _ = dispatcher.setVolume(displayID: item.id, level: Float(value))
+            return
+        }
+
+        volumeDebounceTasks[item.id]?.cancel()
+        volumeDebounceTasks[item.id] = Task { @MainActor [weak self, id = item.id] in
+            try? await Task.sleep(nanoseconds: MediaKeyConstants.ddcDebounceNanoseconds)
+            guard !Task.isCancelled, let self = self else { return }
+            _ = self.dispatcher.setVolume(displayID: id, level: Float(value))
+            self.volumeDebounceTasks.removeValue(forKey: id)
+        }
     }
 
     public func toggleMute(_ item: DisplayItemModel) {

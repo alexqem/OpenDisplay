@@ -141,28 +141,29 @@ public struct VirtualSectionView: View {
             }
 
             if !store.virtualDisplays.isEmpty {
-                HStack(spacing: 6) {
-                    ForEach(store.virtualDisplays) { chip in
-                        HStack(spacing: 4) {
-                            Text(chip.name)
-                                .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
-                                .foregroundColor(AtlasTheme.cobalt)
-                                .lineLimit(1)
-                            Button {
-                                store.removeVirtualDisplay(id: chip.id)
-                            } label: {
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 8, weight: .bold))
-                                    .foregroundColor(AtlasTheme.textMuted)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(store.virtualDisplays) { chip in
+                            HStack(spacing: 4) {
+                                Text(chip.name)
+                                    .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
+                                    .foregroundColor(AtlasTheme.cobalt)
+                                    .lineLimit(1)
+                                Button {
+                                    store.removeVirtualDisplay(id: chip.id)
+                                } label: {
+                                    Image(systemName: "xmark")
+                                        .font(.system(size: 8, weight: .bold))
+                                        .foregroundColor(AtlasTheme.textMuted)
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(AtlasTheme.cobaltSofter)
+                            .clipShape(Capsule())
                         }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(AtlasTheme.cobaltSofter)
-                        .clipShape(Capsule())
                     }
-                    Spacer()
                 }
             }
         }

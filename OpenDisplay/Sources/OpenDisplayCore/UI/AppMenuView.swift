@@ -14,10 +14,7 @@ public struct AppMenuView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: AtlasTheme.sectionSpacing) {
-                    AtlasEyebrow(title: "Displays", trailing: "\(store.displays.count)")
-                    ForEach(store.displays) { item in
-                        DisplayCardView(item: item)
-                    }
+                    displaysSection
 
                     AtlasDivider()
                     AtlasEyebrow(title: "Presets", trailing: "\(store.presets.count)")
@@ -44,6 +41,62 @@ public struct AppMenuView: View {
         }
     }
 
+    // MARK: - Displays Section with Rich Empty State
+    @ViewBuilder
+    private var displaysSection: some View {
+        AtlasEyebrow(title: "Displays", trailing: "\(store.displays.count)")
+
+        if store.displays.isEmpty {
+            VStack(spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: "display.trianglebadge.exclamationmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(AtlasTheme.warningOrange)
+
+                    Text("[NO MONITORS DETECTED ON IOKIT BUS]")
+                        .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
+                        .foregroundColor(AtlasTheme.warningOrange)
+                }
+
+                Text("Check Thunderbolt/HDMI cable or create a software dummy screen below.")
+                    .font(.system(size: AtlasTheme.fontCaptionMedium))
+                    .foregroundColor(AtlasTheme.textMuted)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 10)
+
+                Button(action: {
+                    store.refresh()
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: AtlasTheme.fontCaptionMedium))
+                        Text("Rescan Hardware Bus")
+                            .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .bold, design: .monospaced))
+                    }
+                    .foregroundColor(AtlasTheme.cobalt)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(AtlasTheme.surfaceCard)
+                    .overlay(
+                        Rectangle().stroke(AtlasTheme.cobalt, lineWidth: AtlasTheme.borderWidth)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(AtlasTheme.surfaceHeader)
+            .overlay(
+                Rectangle().stroke(AtlasTheme.borderMedium, lineWidth: AtlasTheme.borderWidth)
+            )
+        } else {
+            ForEach(store.displays) { item in
+                DisplayCardView(item: item)
+            }
+        }
+    }
+
+    // MARK: - Header
     private var header: some View {
         HStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
@@ -82,9 +135,25 @@ public struct AppMenuView: View {
         )
     }
 
+    // MARK: - Footer
     private var footer: some View {
         HStack(spacing: 8) {
-            Text("V2 · 100% FREE · NO PORTS")
+            Button(action: {
+                store.refresh()
+            }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: AtlasTheme.fontCaptionSmall))
+                    Text("RESCAN")
+                        .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
+                }
+                .foregroundColor(AtlasTheme.textBody)
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            Text("V2 · 100% FREE · ZERO TELEMETRY")
                 .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
                 .foregroundColor(AtlasTheme.textMuted)
                 .tracking(AtlasTheme.trackingTight)
