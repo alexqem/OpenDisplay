@@ -324,6 +324,25 @@ public struct DisplayCardView: View {
                 .frame(width: 140)
             }
 
+            if !item.isBuiltin && !item.isVirtual {
+                HStack(spacing: 4) {
+                    Image(systemName: "cable.connector")
+                        .font(.system(size: AtlasTheme.fontCaptionMedium))
+                        .foregroundColor(AtlasTheme.textMuted)
+
+                    Picker("", selection: inputSourceBinding) {
+                        Text("Input: Auto").tag(nil as DDCInputSource?)
+                        ForEach(DDCInputSource.allCases) { src in
+                            Text(src.label).tag(src as DDCInputSource?)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .controlSize(.small)
+                    .frame(width: AtlasTheme.pickerNarrowWidth)
+                }
+            }
+
             Spacer()
 
             AtlasIconButton(
@@ -353,6 +372,17 @@ public struct DisplayCardView: View {
             get: { item.colorProfileName ?? "" },
             set: { name in
                 store.applyColorProfile(item, store.colorProfiles.first(where: { $0.name == name }))
+            }
+        )
+    }
+
+    private var inputSourceBinding: Binding<DDCInputSource?> {
+        Binding(
+            get: { item.inputSource },
+            set: { source in
+                if let source {
+                    store.setInputSource(item, source)
+                }
             }
         )
     }

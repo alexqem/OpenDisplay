@@ -25,6 +25,7 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
     @Published public var isDisconnected: Bool
     @Published public var rotation: DisplayRotationAngle = .standard
     @Published public var colorProfileName: String?
+    @Published public var inputSource: DDCInputSource?
     @Published public var volumeBeforeMute: Double?
     @Published public var capabilities: DisplayCapabilities = .fallback
 

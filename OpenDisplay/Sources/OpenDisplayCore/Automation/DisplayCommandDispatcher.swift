@@ -52,6 +52,24 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
         return ddc.setVCP(code: .audioMute, value: rawValue)
     }
 
+    /// Switch active video input source on an external display via DDC/CI VCP 0x60
+    public func setInputSource(displayID: CGDirectDisplayID, source: DDCInputSource) -> Bool {
+        guard let service = IOAVServiceMatcher.service(for: displayID),
+              let ddc = IOAVServiceDDC(service: service) else {
+            return false
+        }
+        return ddc.setInputSource(source)
+    }
+
+    /// Read current active video input source from an external display via DDC/CI VCP 0x60
+    public func getInputSource(displayID: CGDirectDisplayID) -> DDCInputSource? {
+        guard let service = IOAVServiceMatcher.service(for: displayID),
+              let ddc = IOAVServiceDDC(service: service) else {
+            return nil
+        }
+        return ddc.getInputSource()
+    }
+
     /// Create a Virtual Display and register it in the lifecycle manager
     public func createVirtual(config: VirtualDisplayConfig) -> VirtualDisplayController? {
         guard let controller = VirtualDisplayController(config: config) else { return nil }
@@ -265,9 +283,17 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
             return (ok, ok ? "Set HDR \(enabled ? "enabled" : "disabled") on display \(tID)" : "Failed to toggle HDR on display \(tID)")
 
         case .setProfile(let target, let profileName):
-            let tID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
-            let ok = setColorProfile(named: profileName, for: tID)
-            return (ok, ok ? "Applied color profile '\(profileName)' to display \(tID)" : "Failed to apply color profile")
+            let targetID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
+            let ok = setColorProfile(named: profileName, for: targetID)
+            return (ok, ok ? "Applied color profile '\(profileName)' to display \(targetID)" : "Failed to apply color profile")
+
+        case .setInputSource(let target, let sourceStr):
+            guard let source = DDCInputSource.from(cliString: sourceStr) else {
+                return (false, "Invalid input source: '\(sourceStr)'. Supported: dp1, dp2, hdmi1, hdmi2, usbc")
+            }
+            let targetID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
+            let ok = setInputSource(displayID: targetID, source: source)
+            return (ok, ok ? "Switched display \(targetID) input to \(source.label)" : "Failed to switch input source on display \(targetID)")
 
         case .listProfiles:
             let profiles = availableColorProfiles()

@@ -14,6 +14,7 @@ public enum CLICommand: Equatable, Sendable {
     case forceRGB(target: String)
     case setHDR(target: String, enabled: Bool)
     case setProfile(target: String, profileName: String)
+    case setInputSource(target: String, source: String)
     case listProfiles
     case help
     case unknown(String)
@@ -122,6 +123,11 @@ public enum OpenDisplayCLI {
             let target = parseFlag(AutomationConstants.flagTarget, arguments: tail, defaultValue: AutomationConstants.cliDefaultTargetActive)
             let profile = parseFlag(AutomationConstants.flagProfile, arguments: tail)
             return .setProfile(target: target, profileName: profile)
+
+        case "input", "set-input":
+            let target = parseFlag(AutomationConstants.flagTarget, arguments: tail, defaultValue: AutomationConstants.cliDefaultTargetActive)
+            let input = parseFlag(AutomationConstants.flagInput, arguments: tail)
+            return .setInputSource(target: target, source: input)
 
         case "profiles", "list-profiles":
             return .listProfiles

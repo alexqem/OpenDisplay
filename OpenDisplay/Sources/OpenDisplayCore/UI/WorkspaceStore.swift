@@ -72,6 +72,9 @@ public final class WorkspaceStore: ObservableObject {
             model.isMirrored = DisplayMirrorController.isMirroring(info.id)
             model.isDisconnected = DisplayPowerStateController.shared.isDisconnected(displayID: info.id)
             model.capabilities = DisplayInventory.probeCapabilities(for: info.id)
+            if !model.isBuiltin && !model.isVirtual {
+                model.inputSource = dispatcher.getInputSource(displayID: info.id)
+            }
             refreshed.append(model)
         }
         displays = refreshed
@@ -201,6 +204,12 @@ public final class WorkspaceStore: ObservableObject {
         }
         if ColorProfileController.shared.setProfile(profile, for: item.id) {
             item.colorProfileName = profile.name
+        }
+    }
+
+    public func setInputSource(_ item: DisplayItemModel, _ source: DDCInputSource) {
+        if dispatcher.setInputSource(displayID: item.id, source: source) {
+            item.inputSource = source
         }
     }
 

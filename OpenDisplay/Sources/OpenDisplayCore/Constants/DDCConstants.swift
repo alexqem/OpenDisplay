@@ -55,3 +55,40 @@ public enum DDCProtocolLimits {
     public static let audioMuteEngaged: UInt16 = 1
     public static let audioMuteReleased: UInt16 = 2
 }
+
+/// Standard DDC/CI Input Source Codes (VCP 0x60)
+public enum DDCInputSource: UInt16, CaseIterable, Sendable, Identifiable {
+    case displayPort1 = 0x0F
+    case displayPort2 = 0x10
+    case hdmi1        = 0x11
+    case hdmi2        = 0x12
+    case usbC         = 0x1B
+
+    public var id: UInt16 { rawValue }
+
+    public var label: String {
+        switch self {
+        case .displayPort1: return "DP 1"
+        case .displayPort2: return "DP 2"
+        case .hdmi1:        return "HDMI 1"
+        case .hdmi2:        return "HDMI 2"
+        case .usbC:         return "USB-C"
+        }
+    }
+
+    public var cliIdentifier: String {
+        switch self {
+        case .displayPort1: return "dp1"
+        case .displayPort2: return "dp2"
+        case .hdmi1:        return "hdmi1"
+        case .hdmi2:        return "hdmi2"
+        case .usbC:         return "usbc"
+        }
+    }
+
+    public static func from(cliString: String) -> DDCInputSource? {
+        let normalized = cliString.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return allCases.first { $0.cliIdentifier == normalized || String($0.rawValue) == normalized }
+    }
+}
+
