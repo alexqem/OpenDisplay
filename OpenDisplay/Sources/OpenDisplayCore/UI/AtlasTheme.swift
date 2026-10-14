@@ -104,9 +104,9 @@ public enum AtlasTheme {
     // MARK: - Geometry & Layout Constants
     public static let zeroRadius: CGFloat = 0.0
     public static let borderWidth: CGFloat = 1.0
-    public static let popoverWidth: CGFloat = 420.0
+    public static let popoverWidth: CGFloat = 400.0
     public static let popoverHeight: CGFloat = 660.0
-    public static let maxScrollHeight: CGFloat = 520.0
+    public static let maxScrollHeight: CGFloat = 400.0
     public static let pickerWidth: CGFloat = 120.0
     public static let pickerNarrowWidth: CGFloat = 72.0
     public static let sectionSpacing: CGFloat = 16.0
