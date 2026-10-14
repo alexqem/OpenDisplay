@@ -9,7 +9,7 @@ final class Phase17Tests: XCTestCase {
         XCTAssertEqual(ResolutionClassifier.aspectRatioString(width: 1920, height: 1080), "16:9")
         XCTAssertEqual(ResolutionClassifier.aspectRatioString(width: 3456, height: 2234), "1728:1117")
         XCTAssertEqual(ResolutionClassifier.aspectRatioString(width: 2560, height: 1600), "16:10")
-        XCTAssertEqual(ResolutionClassifier.aspectRatioString(width: 3440, height: 1440), "43:18") // Ultra-wide
+        XCTAssertEqual(ResolutionClassifier.aspectRatioString(width: 3440, height: 1440), "21:9")  // Ultra-wide (43:18 marketing normalized)
         XCTAssertEqual(ResolutionClassifier.aspectRatioString(width: 5120, height: 1440), "32:9")  // Super ultra-wide
         XCTAssertEqual(ResolutionClassifier.aspectRatioString(width: 0, height: 1080), "Unknown")
     }

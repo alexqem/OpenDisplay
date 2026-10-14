@@ -87,9 +87,12 @@ public enum ResolutionClassifier {
         let w = width / d
         let h = height / d
 
-        // Normalize common ultra-wides (e.g. 43:18 or 64:27 -> 21:9)
+        // Normalize common aspect ratios to marketing standard names
         if (w == 64 && h == 27) || (w == 43 && h == 18) {
             return "21:9"
+        }
+        if w == 8 && h == 5 {
+            return "16:10"
         }
         return "\(w):\(h)"
     }
