@@ -141,6 +141,35 @@ public final class IOAVServiceDDC {
         return false
     }
 
+    /// Read a DDC/CI VCP value with retry support
+    public func getVCP(code: DDCVcpCode) -> (current: UInt16, max: UInt16)? {
+        let readPacket = DDCPacketSerializer.buildReadPacket(vcpCode: code)
+        let (slave, sub) = i2cCoordinates
+
+        for _ in 0..<DDCProtocolLimits.maxRetryAttempts {
+            let writeKr = readPacket.withUnsafeBufferPointer { ptr in
+                writeI2CFn(avServiceHandle, slave, sub, ptr.baseAddress!, UInt32(readPacket.count))
+            }
+            guard writeKr == KERN_SUCCESS else {
+                usleep(DDCProtocolLimits.defaultSleepMilliseconds * 1000)
+                continue
+            }
+
+            usleep(DDCProtocolLimits.defaultSleepMilliseconds * 1000)
+
+            var replyBuffer = [UInt8](repeating: 0, count: DDCProtocolLimits.readReplyBufferSize)
+            let bufferCount = UInt32(replyBuffer.count)
+            let readKr = replyBuffer.withUnsafeMutableBufferPointer { ptr in
+                readI2CFn(avServiceHandle, slave, sub, ptr.baseAddress!, bufferCount)
+            }
+            if readKr == KERN_SUCCESS,
+               let parsed = DDCPacketSerializer.parseReadReply(buffer: replyBuffer, expectedVcp: code) {
+                return parsed
+            }
+        }
+        return nil
+    }
+
     /// Engage or release hardware audio mute via DDC/CI VCP 0x8D
     public func setAudioMute(muted: Bool) -> Bool {
         let value = muted ? DDCProtocolLimits.audioMuteEngaged : DDCProtocolLimits.audioMuteReleased
