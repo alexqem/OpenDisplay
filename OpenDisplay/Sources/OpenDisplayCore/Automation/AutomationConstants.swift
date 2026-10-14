@@ -23,7 +23,6 @@ public enum AutomationConstants {
     public static let flagPreset: String = "preset"
     public static let flagProfile: String = "profile"
     public static let flagInput: String = "input"
-    public static let flagWidth: String = "width"
     public static let flagHeight: String = "height"
     public static let flagHiDPI: String = "hidpi"
     public static let flagState: String = "state"
