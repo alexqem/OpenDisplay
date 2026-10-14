@@ -70,6 +70,21 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
         return ddc.getInputSource()
     }
 
+    /// Enumerate all supported resolution modes for a display
+    public func availableResolutions(for displayID: CGDirectDisplayID) -> [DisplayResolutionDescriptor] {
+        return SkyLightModeEngine.shared.availableModes(for: displayID)
+    }
+
+    /// Switch resolution on a display
+    public func setResolution(displayID: CGDirectDisplayID, width: Int, height: Int, isHiDPI: Bool) -> Bool {
+        return SkyLightModeEngine.shared.setDisplayResolution(
+            displayID: displayID,
+            pointWidth: width,
+            pointHeight: height,
+            isHiDPI: isHiDPI
+        )
+    }
+
     /// Create a Virtual Display and register it in the lifecycle manager
     public func createVirtual(config: VirtualDisplayConfig) -> VirtualDisplayController? {
         guard let controller = VirtualDisplayController(config: config) else { return nil }
@@ -294,6 +309,17 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
             let targetID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
             let ok = setInputSource(displayID: targetID, source: source)
             return (ok, ok ? "Switched display \(targetID) input to \(source.label)" : "Failed to switch input source on display \(targetID)")
+
+        case .setResolution(let target, let width, let height, let isHiDPI):
+            let targetID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
+            let ok = setResolution(displayID: targetID, width: width, height: height, isHiDPI: isHiDPI)
+            return (ok, ok ? "Changed display \(targetID) resolution to \(width)x\(height) (\(isHiDPI ? "HiDPI" : "1x"))" : "Failed to change resolution on display \(targetID)")
+
+        case .listResolutions(let target):
+            let targetID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
+            let modes = availableResolutions(for: targetID)
+            let formatted = modes.map { "\($0.userLabel) [\($0.isRecommended ? "RECOMMENDED" : $0.tier.rawValue)]" }.joined(separator: "\n")
+            return (true, formatted.isEmpty ? "No modes reported" : formatted)
 
         case .listProfiles:
             let profiles = availableColorProfiles()

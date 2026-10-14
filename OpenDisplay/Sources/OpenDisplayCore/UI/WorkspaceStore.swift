@@ -75,6 +75,9 @@ public final class WorkspaceStore: ObservableObject {
             if !model.isBuiltin && !model.isVirtual {
                 model.inputSource = dispatcher.getInputSource(displayID: info.id)
             }
+            let modes = dispatcher.availableResolutions(for: info.id)
+            model.availableResolutions = modes
+            model.selectedResolutionId = modes.first(where: { $0.isCurrent })?.id
             refreshed.append(model)
         }
         displays = refreshed
@@ -210,6 +213,13 @@ public final class WorkspaceStore: ObservableObject {
     public func setInputSource(_ item: DisplayItemModel, _ source: DDCInputSource) {
         if dispatcher.setInputSource(displayID: item.id, source: source) {
             item.inputSource = source
+        }
+    }
+
+    public func setResolution(_ item: DisplayItemModel, mode: DisplayResolutionDescriptor) {
+        if dispatcher.setResolution(displayID: item.id, width: mode.pointWidth, height: mode.pointHeight, isHiDPI: mode.isHiDPI) {
+            item.selectedResolutionId = mode.id
+            refresh()
         }
     }
 

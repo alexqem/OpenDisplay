@@ -26,6 +26,8 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
     @Published public var rotation: DisplayRotationAngle = .standard
     @Published public var colorProfileName: String?
     @Published public var inputSource: DDCInputSource?
+    @Published public var availableResolutions: [DisplayResolutionDescriptor] = []
+    @Published public var selectedResolutionId: String?
     @Published public var volumeBeforeMute: Double?
     @Published public var capabilities: DisplayCapabilities = .fallback
 

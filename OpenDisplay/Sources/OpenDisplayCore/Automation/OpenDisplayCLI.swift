@@ -15,6 +15,8 @@ public enum CLICommand: Equatable, Sendable {
     case setHDR(target: String, enabled: Bool)
     case setProfile(target: String, profileName: String)
     case setInputSource(target: String, source: String)
+    case setResolution(target: String, width: Int, height: Int, isHiDPI: Bool)
+    case listResolutions(target: String)
     case listProfiles
     case help
     case unknown(String)
@@ -128,6 +130,20 @@ public enum OpenDisplayCLI {
             let target = parseFlag(AutomationConstants.flagTarget, arguments: tail, defaultValue: AutomationConstants.cliDefaultTargetActive)
             let input = parseFlag(AutomationConstants.flagInput, arguments: tail)
             return .setInputSource(target: target, source: input)
+
+        case "resolution", "set-resolution":
+            let target = parseFlag(AutomationConstants.flagTarget, arguments: tail, defaultValue: AutomationConstants.cliDefaultTargetActive)
+            let widthStr = parseFlag(AutomationConstants.flagWidth, arguments: tail, defaultValue: "0")
+            let heightStr = parseFlag(AutomationConstants.flagHeight, arguments: tail, defaultValue: "0")
+            let hidpiStr = parseFlag(AutomationConstants.flagHiDPI, arguments: tail, defaultValue: "true")
+            let width = Int(widthStr) ?? 0
+            let height = Int(heightStr) ?? 0
+            let isHiDPI = (hidpiStr.lowercased() == "true" || hidpiStr == "1" || hidpiStr.lowercased() == "yes")
+            return .setResolution(target: target, width: width, height: height, isHiDPI: isHiDPI)
+
+        case "resolutions", "list-resolutions":
+            let target = parseFlag(AutomationConstants.flagTarget, arguments: tail, defaultValue: AutomationConstants.cliDefaultTargetActive)
+            return .listResolutions(target: target)
 
         case "profiles", "list-profiles":
             return .listProfiles

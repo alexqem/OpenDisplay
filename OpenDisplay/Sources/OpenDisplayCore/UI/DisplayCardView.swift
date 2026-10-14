@@ -27,6 +27,7 @@ public struct DisplayCardView: View {
             AtlasDivider()
 
             colorPillsAndProfileRow
+            resolutionModeRow
             geometryActionRow
 
             if item.isDisconnected {
@@ -288,7 +289,61 @@ public struct DisplayCardView: View {
         }
     }
 
-    // MARK: - Row 2: Geometry & Power Control
+    // MARK: - Row 2: Resolution & HiDPI Mode Selector
+    private var resolutionModeRow: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "aspectratio")
+                .font(.system(size: AtlasTheme.fontCaptionMedium))
+                .foregroundColor(AtlasTheme.cobalt)
+
+            Text("Mode:")
+                .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .bold))
+                .foregroundColor(AtlasTheme.textPrimary)
+
+            Picker("", selection: resolutionBinding) {
+                if item.availableResolutions.isEmpty {
+                    Text("System Default").tag("" as String?)
+                } else {
+                    // Group: Recommended HiDPI & Native Modes
+                    let recommended = item.availableResolutions.filter { $0.isRecommended }
+                    if !recommended.isEmpty {
+                        Section(header: Text("RECOMMENDED")) {
+                            ForEach(recommended) { mode in
+                                Text("★ \(mode.userLabel)").tag(mode.id as String?)
+                            }
+                        }
+                    }
+
+                    // Group: Other Scaled Modes
+                    let other = item.availableResolutions.filter { !$0.isRecommended }
+                    if !other.isEmpty {
+                        Section(header: Text("SCALED / LOW RES")) {
+                            ForEach(other) { mode in
+                                Text("\(mode.userLabel) (\(mode.tier.rawValue))").tag(mode.id as String?)
+                            }
+                        }
+                    }
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .controlSize(.small)
+            .frame(maxWidth: .infinity)
+
+            if let cur = item.availableResolutions.first(where: { $0.id == item.selectedResolutionId }) {
+                if cur.isRecommended {
+                    AtlasBadge("RECOMMENDED", style: .lime)
+                } else if cur.isHiDPI {
+                    AtlasBadge("HiDPI", style: .brand)
+                } else {
+                    AtlasBadge("LOW-RES", style: .muted)
+                }
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    // MARK: - Row 3: Geometry & Power Control
     private var geometryActionRow: some View {
         HStack(spacing: 6) {
             HStack(spacing: 4) {
@@ -383,6 +438,17 @@ public struct DisplayCardView: View {
                 if let source {
                     store.setInputSource(item, source)
                 }
+            }
+        )
+    }
+
+    private var resolutionBinding: Binding<String?> {
+        Binding(
+            get: { item.selectedResolutionId },
+            set: { modeId in
+                guard let modeId,
+                      let mode = item.availableResolutions.first(where: { $0.id == modeId }) else { return }
+                store.setResolution(item, mode: mode)
             }
         )
     }

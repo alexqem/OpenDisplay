@@ -121,3 +121,15 @@ public enum DisplayRotationAngle: Int32, CaseIterable, Sendable {
     case rotate180     = 180
     case rotate270     = 270
 }
+
+/// Constants for Resolution & HiDPI Mode Classification
+public enum ResolutionConstants {
+    public static let standardHiDPIScale: Double = 2.0
+    public static let minRecommendedScale: Double = 1.0
+    public static let maxRecommendedScale: Double = 2.0
+    public static let targetHiDPIPPI: Double = 218.0 // Apple Retina target PPI
+    public static let standardDesktopPPI: Double = 110.0 // Standard 1x PPI
+    public static let ppiTolerancePercent: Double = 0.25 // +/- 25% tolerance for optimal Retina sharpness
+    public static let defaultRefreshRateThreshold: Double = 0.5 // Refresh rate epsilon
+}
+

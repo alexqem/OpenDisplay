@@ -103,5 +103,84 @@ public final class SkyLightModeEngine: @unchecked Sendable {
             return false
         }
     }
+
+    /// Enumerate all available display modes with classification and recommendation metadata
+    public func availableModes(for displayID: CGDirectDisplayID) -> [DisplayResolutionDescriptor] {
+        guard let modeList = CGDisplayCopyAllDisplayModes(displayID, nil) as? [CGDisplayMode] else {
+            return []
+        }
+
+        let currentMode = CGDisplayCopyDisplayMode(displayID)
+        let currentModeNumber = getCurrentMode(displayID: displayID) ?? -1
+
+        // Determine native panel dimensions
+        let nativePixelWidth = CGDisplayPixelsWide(displayID)
+        let nativePixelHeight = CGDisplayPixelsHigh(displayID)
+
+        var descriptors: [DisplayResolutionDescriptor] = []
+
+        for (index, mode) in modeList.enumerated() {
+            let pixelW = mode.pixelWidth
+            let pixelH = mode.pixelHeight
+            let pointW = mode.width
+            let pointH = mode.height
+            let rate = mode.refreshRate > 0 ? mode.refreshRate : VirtualDisplayLimits.defaultRefreshRate
+            let modeNum = Int32(index)
+
+            let isCurrent = (currentMode?.pixelWidth == pixelW &&
+                             currentMode?.pixelHeight == pixelH &&
+                             currentMode?.width == pointW &&
+                             currentMode?.height == pointH &&
+                             abs((currentMode?.refreshRate ?? 0) - rate) < ResolutionConstants.defaultRefreshRateThreshold) ||
+                            (modeNum == currentModeNumber)
+
+            let desc = ResolutionClassifier.classify(
+                modeNumber: modeNum,
+                pixelWidth: pixelW,
+                pixelHeight: pixelH,
+                pointWidth: pointW,
+                pointHeight: pointH,
+                refreshRate: rate,
+                nativePixelWidth: nativePixelWidth,
+                nativePixelHeight: nativePixelHeight,
+                isCurrent: isCurrent
+            )
+            descriptors.append(desc)
+        }
+
+        return descriptors
+    }
+
+    /// Set display resolution directly using a CGDisplayMode match
+    public func setDisplayResolution(displayID: CGDirectDisplayID, pointWidth: Int, pointHeight: Int, isHiDPI: Bool) -> Bool {
+        guard let modeList = CGDisplayCopyAllDisplayModes(displayID, nil) as? [CGDisplayMode] else {
+            return false
+        }
+
+        // Find candidate mode matching requested point dimensions and scaling
+        let matched = modeList.first { mode in
+            let modeIsHiDPI = (mode.pixelWidth > mode.width)
+            return mode.width == pointWidth &&
+                   mode.height == pointHeight &&
+                   (isHiDPI ? modeIsHiDPI : !modeIsHiDPI)
+        } ?? modeList.first { mode in
+            mode.width == pointWidth && mode.height == pointHeight
+        }
+
+        guard let targetMode = matched else { return false }
+
+        var configRef: CGDisplayConfigRef?
+        CGBeginDisplayConfiguration(&configRef)
+        guard let config = configRef else { return false }
+
+        let err = CGConfigureDisplayWithDisplayMode(config, displayID, targetMode, nil)
+        if err == .success {
+            CGCompleteDisplayConfiguration(config, .permanently)
+            return true
+        } else {
+            CGCancelDisplayConfiguration(config)
+            return false
+        }
+    }
 }
 #endif
