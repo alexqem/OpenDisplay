@@ -75,21 +75,15 @@ public enum DisplayInventory {
             caps = parsed.capabilities
         }
 
-        // Augment with live SkyLight / ColorDepth queries
+        // Augment parsed capabilities with live SkyLight / ColorDepth queries
         let is10Bit = ColorDepthController.shared.is10BitColorActive(displayID: displayID)
         let supportsHDR = ColorDepthController.shared.supportsHDR(displayID: displayID)
         let hasDDC = IOAVServiceDDC(service: service) != nil
 
-        return DisplayCapabilities(
-            isHDMI: caps.isHDMI,
-            supportsYCbCr444: caps.supportsYCbCr444,
-            supportsYCbCr422: caps.supportsYCbCr422,
-            supportsBasicAudio: caps.supportsBasicAudio,
-            supportsUnderscan: caps.supportsUnderscan,
+        return caps.augmented(
             supports10BitDeepColor: is10Bit || caps.supports10BitDeepColor,
             supportsHDR: supportsHDR || caps.supportsHDR,
-            supportsDDC: hasDDC,
-            physicalAddress: caps.physicalAddress
+            supportsDDC: hasDDC
         )
     }
 

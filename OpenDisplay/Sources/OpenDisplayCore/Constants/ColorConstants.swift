@@ -26,6 +26,19 @@ public enum EDIDConstants {
     public static let fixedHeader: [UInt8] = [0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00]
     public static let cta861ExtensionTag: UInt8 = 0x02
 
+    /// CTA-861 Extension Block structural layout and Data Block parsing constants
+    public enum CTA861Structure {
+        public static let dOffsetByteIndex: Int = 2
+        public static let dataBlockCollectionStartOffset: Int = 4
+        public static let tagBitShift: UInt8 = 5
+        public static let tagMask: UInt8 = 0x07
+        public static let lengthMask: UInt8 = 0x1F
+        public static let highNibbleShift: UInt8 = 4
+        public static let nibbleMask: UInt8 = 0x0F
+        public static let minVSDBHeaderLength: Int = 3
+        public static let minCECPhysicalAddressLength: Int = 5
+    }
+
     /// Byte 3 of CTA-861 Extension Block: Color format capability flags
     public enum CTA861Flags {
         public static let byteIndexInBlock: Int = 3

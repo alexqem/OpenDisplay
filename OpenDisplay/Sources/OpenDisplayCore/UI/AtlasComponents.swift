@@ -205,7 +205,7 @@ public struct AtlasSwitch: View {
 
     public var body: some View {
         Button(action: {
-            withAnimation(.easeInOut(duration: 0.16)) {
+            withAnimation(.easeInOut(duration: AtlasTheme.switchAnimationDuration)) {
                 isOn.toggle()
             }
         }) {
@@ -213,7 +213,7 @@ public struct AtlasSwitch: View {
                 // Background Track: Sharp 0px border, high contrast
                 Rectangle()
                     .fill(isOn ? activeColor : AtlasTheme.surfaceCard)
-                    .frame(width: 32, height: 18)
+                    .frame(width: AtlasTheme.switchWidth, height: AtlasTheme.switchHeight)
                     .overlay(
                         Rectangle().stroke(isOn ? activeColor : AtlasTheme.borderMedium, lineWidth: AtlasTheme.borderWidth)
                     )
@@ -221,8 +221,8 @@ public struct AtlasSwitch: View {
                 // Slider Thumb: Sharp 0px square block
                 Rectangle()
                     .fill(isOn ? Color.white : AtlasTheme.textMuted)
-                    .frame(width: 14, height: 14)
-                    .padding(2)
+                    .frame(width: AtlasTheme.switchThumbSize, height: AtlasTheme.switchThumbSize)
+                    .padding(AtlasTheme.switchThumbPadding)
             }
         }
         .buttonStyle(.plain)

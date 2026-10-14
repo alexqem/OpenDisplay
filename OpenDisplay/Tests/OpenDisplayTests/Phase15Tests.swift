@@ -60,6 +60,12 @@ final class Phase15Tests: XCTestCase {
         XCTAssertFalse(parsed.capabilities.supportsYCbCr422)
         XCTAssertTrue(parsed.capabilities.supportsBasicAudio)
         XCTAssertEqual(parsed.capabilities.physicalAddress, "1.0.0.0")
+
+        // Test augmented capability copy
+        let augmented = parsed.capabilities.augmented(supportsHDR: true, supportsDDC: true)
+        XCTAssertTrue(augmented.supportsHDR)
+        XCTAssertTrue(augmented.supportsDDC)
+        XCTAssertTrue(augmented.isHDMI)
     }
 
     func testDisplayCapabilitiesFallback() {
@@ -75,11 +81,17 @@ final class Phase15Tests: XCTestCase {
         XCTAssertNil(fallback.physicalAddress)
     }
 
-    func testCTA861FlagsConstants() {
+    func testCTA861StructureAndFlagsConstants() {
         XCTAssertEqual(EDIDConstants.CTA861Flags.ycbcr444Mask, 32)
         XCTAssertEqual(EDIDConstants.CTA861Flags.ycbcr422Mask, 16)
         XCTAssertEqual(EDIDConstants.CTA861Flags.basicAudioMask, 64)
         XCTAssertEqual(EDIDConstants.CTA861Flags.underscanMask, 128)
+
+        XCTAssertEqual(EDIDConstants.CTA861Structure.dOffsetByteIndex, 2)
+        XCTAssertEqual(EDIDConstants.CTA861Structure.dataBlockCollectionStartOffset, 4)
+        XCTAssertEqual(EDIDConstants.CTA861Structure.tagBitShift, 5)
+        XCTAssertEqual(EDIDConstants.CTA861Structure.tagMask, 0x07)
+        XCTAssertEqual(EDIDConstants.CTA861Structure.lengthMask, 0x1F)
     }
 
     func testHDMIVSDBConstants() {
@@ -87,5 +99,15 @@ final class Phase15Tests: XCTestCase {
         XCTAssertEqual(EDIDConstants.HDMIVSDBConstants.ieeeRegistrationByte1, 0x0C)
         XCTAssertEqual(EDIDConstants.HDMIVSDBConstants.ieeeRegistrationByte2, 0x00)
         XCTAssertEqual(EDIDConstants.HDMIVSDBConstants.vsdbTagCode, 0x03)
+    }
+
+    func testAtlasSwitchConstants() {
+        #if os(macOS) && arch(arm64)
+        XCTAssertEqual(AtlasTheme.switchWidth, 32.0)
+        XCTAssertEqual(AtlasTheme.switchHeight, 18.0)
+        XCTAssertEqual(AtlasTheme.switchThumbSize, 14.0)
+        XCTAssertEqual(AtlasTheme.switchThumbPadding, 2.0)
+        XCTAssertEqual(AtlasTheme.switchAnimationDuration, 0.16)
+        #endif
     }
 }

@@ -115,5 +115,10 @@ public enum AtlasTheme {
     public static let pillCornerRadius: CGFloat = 9999.0
     public static let inlineSliderWidth: CGFloat = 90.0
     public static let percentLabelWidth: CGFloat = 34.0
+    public static let switchWidth: CGFloat = 32.0
+    public static let switchHeight: CGFloat = 18.0
+    public static let switchThumbSize: CGFloat = 14.0
+    public static let switchThumbPadding: CGFloat = 2.0
+    public static let switchAnimationDuration: Double = 0.16
 }
 #endif

@@ -98,7 +98,7 @@ public struct DisplayCardView: View {
                 AtlasBadge("COREDISPLAY VIRTUAL", style: .lime)
             } else if item.capabilities.isHDMI {
                 AtlasBadge("HDMI-SINK DETECTED", style: .success)
-            } else if IOAVServiceMatcher.service(for: item.id) != nil {
+            } else if item.capabilities.supportsDDC {
                 AtlasBadge("DISPLAYPORT / DDC READY", style: .success)
             } else {
                 AtlasBadge("GAMMA LUT ONLY", style: .warning)

@@ -34,6 +34,25 @@ public struct DisplayCapabilities: Equatable, Sendable {
         self.physicalAddress = physicalAddress
     }
 
+    /// Return a copy with specific properties augmented by live system probing
+    public func augmented(
+        supports10BitDeepColor: Bool? = nil,
+        supportsHDR: Bool? = nil,
+        supportsDDC: Bool? = nil
+    ) -> DisplayCapabilities {
+        return DisplayCapabilities(
+            isHDMI: self.isHDMI,
+            supportsYCbCr444: self.supportsYCbCr444,
+            supportsYCbCr422: self.supportsYCbCr422,
+            supportsBasicAudio: self.supportsBasicAudio,
+            supportsUnderscan: self.supportsUnderscan,
+            supports10BitDeepColor: supports10BitDeepColor ?? self.supports10BitDeepColor,
+            supportsHDR: supportsHDR ?? self.supportsHDR,
+            supportsDDC: supportsDDC ?? self.supportsDDC,
+            physicalAddress: self.physicalAddress
+        )
+    }
+
     /// Empty capabilities for virtual or unprobed displays
     public static let fallback = DisplayCapabilities()
 }
@@ -90,21 +109,23 @@ public enum EDIDParser {
         let supportsUnderscan = (flagsByte & EDIDConstants.CTA861Flags.underscanMask) != 0
 
         // Parse Data Block Collection (starts at byte 4 up to d offset)
-        let dOffset = Int(bytes[extStart + 2])
+        let dOffset = Int(bytes[extStart + EDIDConstants.CTA861Structure.dOffsetByteIndex])
         let dataBlockEnd = min(extStart + dOffset, extStart + EDIDConstants.baseBlockLength - 1)
-        var cursor = extStart + 4
+        var cursor = extStart + EDIDConstants.CTA861Structure.dataBlockCollectionStartOffset
 
         var isHDMI = false
         var physicalAddr: String? = nil
 
         while cursor < dataBlockEnd {
             let header = bytes[cursor]
-            let tag = (header >> 5) & 0x07
-            let length = Int(header & 0x1F)
+            let tag = (header >> EDIDConstants.CTA861Structure.tagBitShift) & EDIDConstants.CTA861Structure.tagMask
+            let length = Int(header & EDIDConstants.CTA861Structure.lengthMask)
             cursor += 1
 
             // Tag 3 = Vendor-Specific Data Block (VSDB)
-            if tag == EDIDConstants.HDMIVSDBConstants.vsdbTagCode, length >= 3, cursor + length <= bytes.count {
+            if tag == EDIDConstants.HDMIVSDBConstants.vsdbTagCode,
+               length >= EDIDConstants.CTA861Structure.minVSDBHeaderLength,
+               cursor + length <= bytes.count {
                 // Check 24-bit IEEE Registration Identifier for HDMI: 00-0C-03 (little-endian: 03 0C 00)
                 let b0 = bytes[cursor]
                 let b1 = bytes[cursor + 1]
@@ -115,11 +136,11 @@ public enum EDIDParser {
                     isHDMI = true
 
                     // Bytes 4-5: Physical Address (e.g. 1.0.0.0 for CEC routing)
-                    if length >= 5 {
-                        let a = (bytes[cursor + 3] >> 4) & 0x0F
-                        let b = bytes[cursor + 3] & 0x0F
-                        let c = (bytes[cursor + 4] >> 4) & 0x0F
-                        let d = bytes[cursor + 4] & 0x0F
+                    if length >= EDIDConstants.CTA861Structure.minCECPhysicalAddressLength {
+                        let a = (bytes[cursor + 3] >> EDIDConstants.CTA861Structure.highNibbleShift) & EDIDConstants.CTA861Structure.nibbleMask
+                        let b = bytes[cursor + 3] & EDIDConstants.CTA861Structure.nibbleMask
+                        let c = (bytes[cursor + 4] >> EDIDConstants.CTA861Structure.highNibbleShift) & EDIDConstants.CTA861Structure.nibbleMask
+                        let d = bytes[cursor + 4] & EDIDConstants.CTA861Structure.nibbleMask
                         physicalAddr = "\(a).\(b).\(c).\(d)"
                     }
                 }
