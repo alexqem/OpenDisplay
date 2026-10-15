@@ -212,7 +212,7 @@ public struct DisplayCardView: View {
         if !item.isBuiltin && !item.isVirtual && item.capabilities.supportsBasicAudio {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text("AUDIO (DDC 0x62)")
+                    Text("AUDIO VOLUME")
                         .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
                         .foregroundStyle(AtlasTheme.textBody)
 
@@ -303,7 +303,7 @@ public struct DisplayCardView: View {
             }) {
                 HStack(spacing: 6) {
                     Image(systemName: item.isAdvancedDrawerExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.system(size: AtlasTheme.fontChevronSmall, weight: .bold))
                         .foregroundStyle(AtlasTheme.cobalt)
 
                     Text(item.isAdvancedDrawerExpanded ? "HIDE DETAILS" : "HARDWARE & COLOR CONTROLS")
@@ -321,7 +321,7 @@ public struct DisplayCardView: View {
                     colorPillsAndProfileRow
                     geometryAndInputRow
                 }
-                .padding(10)
+                .padding(AtlasTheme.drawerPadding)
                 .background(AtlasTheme.surfaceHeader)
                 .overlay(
                     Rectangle().stroke(AtlasTheme.borderMedium, lineWidth: AtlasTheme.borderWidth)
@@ -409,7 +409,7 @@ public struct DisplayCardView: View {
                 .labelsHidden()
                 .pickerStyle(.menu)
                 .controlSize(.small)
-                .frame(width: 110)
+                .frame(width: AtlasTheme.pickerMirrorWidth)
             }
 
             if !item.isBuiltin && !item.isVirtual {

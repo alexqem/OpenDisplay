@@ -109,6 +109,9 @@ public enum AtlasTheme {
     public static let maxScrollHeight: CGFloat = 400.0
     public static let pickerWidth: CGFloat = 120.0
     public static let pickerNarrowWidth: CGFloat = 72.0
+    public static let pickerMirrorWidth: CGFloat = 110.0
+    public static let drawerPadding: CGFloat = 10.0
+    public static let fontChevronSmall: CGFloat = 9.0
     public static let sectionSpacing: CGFloat = 16.0
     public static let blueprintGridSpacing: CGFloat = 18.0
     public static let iconButtonSide: CGFloat = 22.0
