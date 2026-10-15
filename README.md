@@ -8,8 +8,14 @@ OpenDisplay provides complete, fine-grained control over external and built-in d
 
 ## Key Features
 
+- **Master-Slave Display Synchronization & Linked Controls:**
+  - Group multiple displays with designated Master and Slave monitors.
+  - Linked synchronized brightness, volume, and power adjustments with per-slave calibration offsets (`-50%` to `+50%`).
+- **Native Resolution & HiDPI Mode Switcher:**
+  - Full enumeration of physical and virtual display modes via `SkyLight` / CoreGraphics.
+  - Intelligent classification: `★ RECOMMENDED` Retina HiDPI, native, scaled HiDPI, standard 1x, and non-native aspect ratios.
 - **Hardware DDC/CI & Apple DisplayServices Control:**
-  - Direct hardware brightness, contrast, volume, and input switching via Apple Silicon coprocessor (`IOAVService` / `DCPAVServiceProxy`).
+  - Direct hardware brightness, contrast, volume, and video input source switching (`dp1`, `dp2`, `hdmi1`, `hdmi2`, `usbc` via VCP `0x60`).
   - Native Apple DisplayServices support for Studio Display, Pro Display XDR, and built-in panels.
   - MCCS 0xF3 capability string tokenizer and hardware verification.
 - **Virtual Displays (Dummy Screens):**
@@ -54,23 +60,43 @@ OpenDisplay provides complete, fine-grained control over external and built-in d
 
 ---
 
-## Project Structure
+## Project Structure & Architecture
+
+OpenDisplay is structured into modular Swift targets following strict **Single Responsibility Principle (SRP)**, **KISS**, and **DRY** directives:
 
 ```
 OpenDisplay/
-├── Package.swift                  # Swift 5.9 SPM Manifest (.macOS(.v12))
-├── Sources/OpenDisplayCore/       # Core Implementation
-│   ├── Constants/                 # DDCConstants, DisplayConstants, ColorConstants
-│   ├── DynamicBridge/             # DynamicLibrary (dlopen/dlsym), DynamicObjCClass
-│   ├── Hardware/                  # IOAVServiceMatcher, IOAVServiceDDC, AppleDisplayServicesBridge, DisplayInventory
-│   ├── Color/                     # EDIDParser, RGBForcingEngine, ColorDepthController, ColorProfileController
-│   ├── VirtualDisplay/            # VirtualDisplayController, VirtualDisplayManager, SkyLightModeEngine, DisplayMirrorController, DisplayPresetManager, DisplayPowerStateController
-│   ├── Luminance/                 # GammaDimmingEngine, XDROverdriveEngine, NightShiftTrueToneBridge, AmbientBrightnessSyncEngine
-│   ├── Streaming/                 # PipCaptureEngine (ScreenCaptureKit), PipStreamManager, PipWindowPanel (.floating)
-│   ├── Automation/                # OpenDisplayCLI, DisplayCommandDispatcher, LaunchAtLoginController
-│   ├── UI/                        # AppMenuView (SwiftUI), DisplayCardView, PopoverSections, AtlasTheme, AtlasComponents, WorkspaceStore, DisplayItemModel, MenuBarController, MediaKeysListener, NativeOSDController, NotchOverlayManager
-│   └── AppFeatureManager.swift    # Permanent Unrestricted Feature Engine
-└── Tests/OpenDisplayTests/        # Complete Unit Test Suite (Phase1Tests ... Phase13Tests)
+├── Package.swift                          # Swift 5.9 SPM Manifest (.macOS(.v12))
+├── Sources/
+│   ├── OpenDisplayApp/                    # macOS Menu Bar Application Target
+│   │   └── main.swift                     # NSApplication entrypoint & MenuBarController host
+│   ├── OpenDisplayCLI/                    # Standalone CLI Executable Target
+│   │   └── main.swift                     # CLI entrypoint routing commands to Dispatcher
+│   └── OpenDisplayCore/                   # Core Framework Target
+│       ├── Constants/                     # DDCConstants, DisplayConstants, ColorConstants, AppLogger (1MB ring buffer)
+│       ├── DynamicBridge/                 # DynamicLibrary (dlopen/dlsym), DynamicObjCClass (NSClassFromString)
+│       ├── Hardware/                      # IOAVServiceMatcher, IOAVServiceDDC, AppleDisplayServicesBridge, DisplayInventory
+│       ├── Color/                         # EDIDParser, RGBForcingEngine, ColorDepthController, ColorProfileController
+│       ├── VirtualDisplay/                # VirtualDisplayController, SkyLightModeEngine, ResolutionClassifier,
+│       │                                  # DisplayGroupManager (Master-Slave Sync), DisplayPresetManager
+│       ├── Luminance/                     # GammaDimmingEngine, XDROverdriveEngine, NightShiftTrueToneBridge, AmbientSync
+│       ├── Streaming/                     # PipCaptureEngine (ScreenCaptureKit), PipStreamManager, PipWindowPanel
+│       ├── Automation/                    # OpenDisplayCLI, DisplayCommandDispatcher (Single Source of Truth), LaunchAtLogin
+│       └── UI/                            # Swiss Neo-Brutalist (Atlas/TypeUI) UI Sub-Bundle
+│           ├── DisplayCardView.swift      # Top-level coordinator card view (< 55 lines)
+│           ├── DisplayCardHeaderView.swift# Icon, display name, dynamic badges, numeric ID
+│           ├── DisplayCardStatusBadgeRow.swift # Hardware protocol capabilities (DDC, HDMI, 10-Bit, CEC)
+│           ├── DisplayLuminanceControlView.swift # Brightness slider, steppers, direct % input, XDR
+│           ├── DisplayAudioControlView.swift # DDC volume slider, mute toggle
+│           ├── DisplayResolutionModePickerView.swift # Categorized HiDPI/Resolution mode picker
+│           ├── DisplayAdvancedControlsDrawerView.swift # Progressive disclosure hardware & sync drawer
+│           ├── WorkspaceStore.swift       # Central reactive state store (< 240 lines)
+│           ├── WorkspaceStore+Presets.swift # JSON preset snapshots & import/export
+│           ├── WorkspaceStore+Features.swift # Dummy displays, system toggles, sync groups
+│           ├── AtlasTheme.swift           # Design tokens, dimensions, adaptive colors
+│           ├── AtlasComponents.swift      # Sharp zero-radius Neo-Brutalist UI primitives
+│           └── MenuBarController.swift    # Status bar item & transient SwiftUI popover host
+└── Tests/OpenDisplayTests/                # 20 Test Suites (Phases 1-20, 100% offline pure logic testability)
 ```
 
 ---
@@ -129,6 +155,19 @@ opendisplay force-rgb -target=2
 opendisplay hdr -target=1 -state=enable
 opendisplay color-profile -target=1 -profile="Display P3"
 opendisplay profiles
+
+# Video Input Source Switching (DDC/CI VCP 0x60)
+opendisplay set-input -target=1 -input=hdmi1
+opendisplay set-input -target=2 -input=usbc
+
+# Native Resolution & HiDPI Switching
+opendisplay list-resolutions -target=1
+opendisplay set-resolution -target=1 -width=2560 -height=1440 -hidpi=true
+
+# Master-Slave Display Synchronization
+opendisplay link-group -master=1 -slave=2 -offset=0.10
+opendisplay list-groups
+opendisplay unlink-group -slave=2
 
 # List display configuration presets
 opendisplay presets
