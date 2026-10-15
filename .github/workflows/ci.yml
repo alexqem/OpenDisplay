@@ -84,6 +84,9 @@ jobs:
           # Verify signature
           codesign -vvv --deep --strict build/OpenDisplay.app
 
+          # Run headless smoke test to verify binary launches cleanly and writes log
+          ./build/OpenDisplay.app/Contents/MacOS/opendisplay list-groups
+          
           # Create release zip archive preserving symlinks, execution bits, and xattrs
           cd build
           ditto -c -k --keepParent OpenDisplay.app OpenDisplay-macOS-arm64.zip

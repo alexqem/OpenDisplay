@@ -4,7 +4,7 @@ import AppKit
 import OpenDisplayCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private var menuBarController: MenuBarController?
+    var menuBarController: MenuBarController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppLogger.shared.log("OpenDisplay launching...")
@@ -28,12 +28,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-// Start NSApplication lifecycle
+// Global strong reference to delegate to prevent deallocation
 AppLogger.shared.log("Starting OpenDisplayApp executable...")
 let app = NSApplication.shared
-let delegate = AppDelegate()
-app.delegate = delegate
-app.run()
+let appDelegate = AppDelegate()
+app.delegate = appDelegate
+_ = NSApplicationMain(CommandLine.argc, CommandLine.unsafeArgv)
 #else
 print("OpenDisplay is engineered exclusively for Apple Silicon ARM64 on macOS.")
 #endif
