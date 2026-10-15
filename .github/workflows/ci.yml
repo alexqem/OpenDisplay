@@ -70,18 +70,35 @@ jobs:
               <true/>
               <key>NSHighResolutionCapable</key>
               <true/>
+              <key>NSPrincipalClass</key>
+              <string>NSApplication</string>
           </dict>
           </plist>
           EOF
 
-          # Create release zip archive
+          # Ad-hoc codesign every binary and the app bundle (mandatory for ARM64 macOS)
+          codesign --force --deep -s - build/OpenDisplay.app/Contents/MacOS/opendisplay
+          codesign --force --deep -s - build/OpenDisplay.app/Contents/MacOS/OpenDisplay
+          codesign --force --deep -s - build/OpenDisplay.app
+
+          # Verify signature
+          codesign -vvv --deep --strict build/OpenDisplay.app
+
+          # Create release zip archive preserving symlinks, execution bits, and xattrs
           cd build
-          zip -r OpenDisplay-macOS-arm64.zip OpenDisplay.app
+          ditto -c -k --keepParent OpenDisplay.app OpenDisplay-macOS-arm64.zip
+          
+          # Also package as DMG for native drag-and-drop mounting
+          hdiutil create -volname "OpenDisplay" -srcfolder OpenDisplay.app -ov -format UDZO OpenDisplay-macOS-arm64.dmg
+
 
       - name: Upload OpenDisplay Release Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: OpenDisplay-macOS-arm64
-          path: build/OpenDisplay-macOS-arm64.zip
+          path: |
+            build/OpenDisplay-macOS-arm64.zip
+            build/OpenDisplay-macOS-arm64.dmg
           retention-days: 30
+
 
