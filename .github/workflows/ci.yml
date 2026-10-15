@@ -34,3 +34,54 @@ jobs:
       - name: Build Release Binary
         working-directory: OpenDisplay
         run: swift build -c release -v
+
+      - name: Assemble OpenDisplay.app Bundle
+        run: |
+          mkdir -p build/OpenDisplay.app/Contents/MacOS
+          mkdir -p build/OpenDisplay.app/Contents/Resources
+          
+          # Copy release executables
+          cp OpenDisplay/.build/release/OpenDisplayApp build/OpenDisplay.app/Contents/MacOS/OpenDisplay
+          cp OpenDisplay/.build/release/opendisplay build/OpenDisplay.app/Contents/MacOS/opendisplay
+          chmod +x build/OpenDisplay.app/Contents/MacOS/OpenDisplay
+          chmod +x build/OpenDisplay.app/Contents/MacOS/opendisplay
+
+          # Create Info.plist for menu bar app
+          cat << 'EOF' > build/OpenDisplay.app/Contents/Info.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>OpenDisplay</string>
+              <key>CFBundleIdentifier</key>
+              <string>org.opendisplay.app</string>
+              <key>CFBundleName</key>
+              <string>OpenDisplay</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.4.0</string>
+              <key>CFBundleVersion</key>
+              <string>1.4.0</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>12.0</string>
+              <key>LSUIElement</key>
+              <true/>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+
+          # Create release zip archive
+          cd build
+          zip -r OpenDisplay-macOS-arm64.zip OpenDisplay.app
+
+      - name: Upload OpenDisplay Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenDisplay-macOS-arm64
+          path: build/OpenDisplay-macOS-arm64.zip
+          retention-days: 30
+

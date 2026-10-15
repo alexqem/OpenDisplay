@@ -10,6 +10,14 @@ let package = Package(
         .library(
             name: "OpenDisplayCore",
             targets: ["OpenDisplayCore"]
+        ),
+        .executable(
+            name: "OpenDisplayApp",
+            targets: ["OpenDisplayApp"]
+        ),
+        .executable(
+            name: "opendisplay",
+            targets: ["OpenDisplayCLI"]
         )
     ],
     dependencies: [],
@@ -18,6 +26,16 @@ let package = Package(
             name: "OpenDisplayCore",
             dependencies: [],
             path: "Sources/OpenDisplayCore"
+        ),
+        .executableTarget(
+            name: "OpenDisplayApp",
+            dependencies: ["OpenDisplayCore"],
+            path: "Sources/OpenDisplayApp"
+        ),
+        .executableTarget(
+            name: "OpenDisplayCLI",
+            dependencies: ["OpenDisplayCore"],
+            path: "Sources/OpenDisplayCLI"
         ),
         .testTarget(
             name: "OpenDisplayTests",
