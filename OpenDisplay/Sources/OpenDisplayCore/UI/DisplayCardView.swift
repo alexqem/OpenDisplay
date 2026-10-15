@@ -3,8 +3,7 @@ import SwiftUI
 import AppKit
 import CoreGraphics
 
-/// Per-display control card: luminance, volume, color pills, detected HDMI capabilities, and geometry actions
-/// Styled with Swiss Neo-Brutalist rigor (Atlas/TypeUI)
+/// Clean, progressive-disclosure Display Card View following Atlas / TypeUI and SwiftUI Pro rules
 public struct DisplayCardView: View {
     @ObservedObject public var item: DisplayItemModel
     @ObservedObject private var store = WorkspaceStore.shared
@@ -20,15 +19,15 @@ public struct DisplayCardView: View {
         VStack(alignment: .leading, spacing: 10) {
             headerRow
             hardwareStatusBadgeRow
-            detectedHdmiCapabilitiesRow
             luminanceRow
             volumeRow
 
             AtlasDivider()
 
-            colorPillsAndProfileRow
             resolutionModeRow
-            geometryActionRow
+
+            // Progressive Disclosure Accordion: Advanced Hardware & Color Drawer
+            advancedDrawerSection
 
             if item.isDisconnected {
                 HStack(spacing: 6) {
@@ -37,7 +36,7 @@ public struct DisplayCardView: View {
                     Text("SOFTWARE DISCONNECTED (BLANKED)")
                         .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
                 }
-                .foregroundColor(AtlasTheme.warningOrange)
+                .foregroundStyle(AtlasTheme.warningOrange)
                 .padding(.top, 2)
             }
         }
@@ -56,11 +55,11 @@ public struct DisplayCardView: View {
         HStack(spacing: 8) {
             Image(systemName: headerIcon)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(AtlasTheme.cobalt)
+                .foregroundStyle(AtlasTheme.cobalt)
 
             Text(item.name)
                 .font(.system(size: AtlasTheme.fontBodyMedium, weight: .bold))
-                .foregroundColor(AtlasTheme.textPrimary)
+                .foregroundStyle(AtlasTheme.textPrimary)
                 .lineLimit(1)
 
             if item.isVirtual {
@@ -77,7 +76,7 @@ public struct DisplayCardView: View {
 
             Text("ID: \(item.id)")
                 .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .semibold, design: .monospaced))
-                .foregroundColor(AtlasTheme.textMuted)
+                .foregroundStyle(AtlasTheme.textMuted)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
                 .background(AtlasTheme.cobaltSofter)
@@ -90,7 +89,7 @@ public struct DisplayCardView: View {
         return item.isBuiltin ? "laptopcomputer" : "display"
     }
 
-    // MARK: - Channel / Protocol Status
+    // MARK: - Hardware Status Strip
     private var hardwareStatusBadgeRow: some View {
         HStack(spacing: 6) {
             if item.isBuiltin {
@@ -98,11 +97,15 @@ public struct DisplayCardView: View {
             } else if item.isVirtual {
                 AtlasBadge("COREDISPLAY VIRTUAL", style: .lime)
             } else if item.capabilities.isHDMI {
-                AtlasBadge("HDMI-SINK DETECTED", style: .success)
+                AtlasBadge("HDMI-SINK", style: .success)
             } else if item.capabilities.supportsDDC {
-                AtlasBadge("DISPLAYPORT / DDC READY", style: .success)
+                AtlasBadge("DDC READY", style: .success)
             } else {
                 AtlasBadge("GAMMA LUT ONLY", style: .warning)
+            }
+
+            if item.capabilities.supports10BitDeepColor {
+                AtlasBadge("10-BIT", style: .brand)
             }
 
             if let addr = item.capabilities.physicalAddress {
@@ -113,40 +116,13 @@ public struct DisplayCardView: View {
         }
     }
 
-    // MARK: - Autodetected HDMI / EDID Capabilities Strip
-    @ViewBuilder
-    private var detectedHdmiCapabilitiesRow: some View {
-        if !item.isBuiltin && !item.isVirtual {
-            HStack(spacing: 6) {
-                Text("CAPS:")
-                    .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
-                    .foregroundColor(AtlasTheme.textMuted)
-
-                if item.capabilities.supportsYCbCr444 || item.capabilities.supportsYCbCr422 {
-                    AtlasBadge("YUV/YCbCr", style: .brand)
-                }
-                if item.capabilities.supportsBasicAudio {
-                    AtlasBadge("AUDIO", style: .muted)
-                }
-                if item.capabilities.supports10BitDeepColor {
-                    AtlasBadge("10-BIT", style: .success)
-                }
-                if item.capabilities.supportsHDR {
-                    AtlasBadge("HDR10", style: .lime)
-                }
-                Spacer()
-            }
-            .padding(.vertical, 2)
-        }
-    }
-
-    // MARK: - Luminance Slider & Direct Numeric Input
+    // MARK: - Luminance Slider & Steppers
     private var luminanceRow: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text("LUMINANCE")
                     .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
-                    .foregroundColor(AtlasTheme.textBody)
+                    .foregroundStyle(AtlasTheme.textBody)
 
                 Spacer()
 
@@ -154,7 +130,7 @@ public struct DisplayCardView: View {
                     TextField("", text: $brightnessInputText, onCommit: commitBrightnessInput)
                         .textFieldStyle(.plain)
                         .font(.system(size: AtlasTheme.fontBodySmall, weight: .bold, design: .monospaced))
-                        .foregroundColor(AtlasTheme.cobalt)
+                        .foregroundStyle(AtlasTheme.cobalt)
                         .frame(width: 44)
                         .padding(.horizontal, 4)
                         .padding(.vertical, 1)
@@ -169,7 +145,7 @@ public struct DisplayCardView: View {
                     }) {
                         Text("\(Int(item.brightness * 100))%")
                             .font(.system(size: AtlasTheme.fontBodySmall, weight: .bold, design: .monospaced))
-                            .foregroundColor(AtlasTheme.cobalt)
+                            .foregroundStyle(AtlasTheme.cobalt)
                             .padding(.horizontal, 4)
                             .padding(.vertical, 1)
                             .background(AtlasTheme.cobaltSofter)
@@ -201,124 +177,98 @@ public struct DisplayCardView: View {
                     store.setBrightness(item, next, immediate: true)
                 }
                 .disabled(item.isDisconnected)
+
+                // Optional XDR Overdrive Pill
+                if !item.isBuiltin && !item.isVirtual {
+                    Button(action: { store.toggleXDROverdrive(item) }) {
+                        Text("XDR")
+                            .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
+                            .foregroundStyle(item.isXDROverdriveEnabled ? AtlasTheme.cobaltDark : AtlasTheme.textMuted)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 4)
+                            .background(item.isXDROverdriveEnabled ? AtlasTheme.electricLime : AtlasTheme.surfaceCard)
+                            .overlay(
+                                Rectangle().stroke(item.isXDROverdriveEnabled ? AtlasTheme.electricLime : AtlasTheme.borderMedium, lineWidth: AtlasTheme.borderWidth)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .help("XDR / Hardware Brightness Overdrive (Boost peak nits)")
+                }
             }
         }
     }
 
     private func commitBrightnessInput() {
-        if let val = Double(brightnessInputText.replacingOccurrences(of: "%", with: "")) {
+        isEditingBrightness = false
+        if let val = Double(brightnessInputText) {
             let clamped = max(0.0, min(100.0, val)) / 100.0
             store.setBrightness(item, clamped, immediate: true)
         }
-        isEditingBrightness = false
     }
 
-    // MARK: - Volume Slider
+    // MARK: - Audio Volume & Mute Row
+    @ViewBuilder
     private var volumeRow: some View {
-        HStack(spacing: 8) {
-            Text("VOLUME")
-                .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
-                .foregroundColor(AtlasTheme.textBody)
+        if !item.isBuiltin && !item.isVirtual && item.capabilities.supportsBasicAudio {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("AUDIO (DDC 0x62)")
+                        .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
+                        .foregroundStyle(AtlasTheme.textBody)
 
-            Slider(
-                value: Binding(
-                    get: { item.volume },
-                    set: { store.setVolume(item, $0, immediate: false) }
-                ),
-                in: 0...1
-            )
-            .tint(AtlasTheme.cobaltSoft)
-            .disabled(item.isVirtual)
+                    Spacer()
 
-            Text("\(Int(item.volume * 100))%")
-                .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .bold, design: .monospaced))
-                .foregroundColor(AtlasTheme.textBody)
-                .frame(width: AtlasTheme.percentLabelWidth, alignment: .trailing)
+                    Text(item.isMuted ? "MUTED" : "\(Int(item.volume * 100))%")
+                        .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
+                        .foregroundStyle(item.isMuted ? AtlasTheme.warningOrange : AtlasTheme.textMuted)
+                }
 
-            AtlasIconButton(
-                systemName: item.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill",
-                action: { store.toggleMute(item) }
-            )
-            .disabled(item.isVirtual)
-        }
-    }
+                HStack(spacing: 6) {
+                    AtlasIconButton(systemName: item.isMuted ? "speaker.slash.fill" : "speaker.wave.2") {
+                        store.toggleMute(item)
+                    }
+                    .disabled(item.isDisconnected)
 
-    // MARK: - Row 1: Smooth Switches for RGB 4:4:4 & HDR + ICC Menu
-    private var colorPillsAndProfileRow: some View {
-        HStack(spacing: 12) {
-            // RGB 4:4:4 Forcing Switch
-            HStack(spacing: 5) {
-                AtlasSwitch(
-                    isOn: Binding(
-                        get: { item.isForceRGBActive },
-                        set: { _ in store.toggleForceRGB(item) }
-                    ),
-                    activeColor: AtlasTheme.cobalt
-                )
-                Text("RGB 4:4:4")
-                    .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
-                    .foregroundColor(item.isForceRGBActive ? AtlasTheme.textPrimary : AtlasTheme.textMuted)
-            }
-
-            // HDR Switch
-            HStack(spacing: 5) {
-                AtlasSwitch(
-                    isOn: Binding(
-                        get: { item.isHDREnabled },
-                        set: { _ in store.toggleHDR(item) }
-                    ),
-                    activeColor: AtlasTheme.successGreen
-                )
-                Text("HDR")
-                    .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
-                    .foregroundColor(item.isHDREnabled ? AtlasTheme.textPrimary : AtlasTheme.textMuted)
-            }
-
-            Spacer()
-
-            Picker("", selection: profileBinding) {
-                Text("ICC: Auto").tag("")
-                ForEach(store.colorProfiles) { profile in
-                    Text(profile.name).tag(profile.name)
+                    Slider(
+                        value: Binding(
+                            get: { item.volume },
+                            set: { store.setVolume(item, $0, immediate: false) }
+                        ),
+                        in: 0...1
+                    )
+                    .tint(AtlasTheme.cobalt)
+                    .disabled(item.isDisconnected || item.isMuted)
                 }
             }
-            .labelsHidden()
-            .pickerStyle(.menu)
-            .controlSize(.small)
-            .frame(width: AtlasTheme.pickerWidth)
         }
     }
 
-    // MARK: - Row 2: Resolution & HiDPI Mode Selector
+    // MARK: - Resolution & HiDPI Selector (Uses Cached Sub-Collections)
     private var resolutionModeRow: some View {
         HStack(spacing: 6) {
             Image(systemName: "aspectratio")
                 .font(.system(size: AtlasTheme.fontCaptionMedium))
-                .foregroundColor(AtlasTheme.cobalt)
+                .foregroundStyle(AtlasTheme.cobalt)
 
             Text("Mode:")
                 .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .bold))
-                .foregroundColor(AtlasTheme.textPrimary)
+                .foregroundStyle(AtlasTheme.textPrimary)
 
             Picker("", selection: resolutionBinding) {
                 if item.availableResolutions.isEmpty {
                     Text("System Default").tag("" as String?)
                 } else {
-                    // Group: Recommended HiDPI & Native Modes
-                    let recommended = item.availableResolutions.filter { $0.isRecommended }
-                    if !recommended.isEmpty {
+                    if !item.recommendedResolutions.isEmpty {
                         Section(header: Text("RECOMMENDED")) {
-                            ForEach(recommended) { mode in
+                            ForEach(item.recommendedResolutions) { mode in
                                 Text("★ \(mode.userLabel)").tag(mode.id as String?)
                             }
                         }
                     }
 
-                    // Group: Other Scaled Modes
-                    let other = item.availableResolutions.filter { !$0.isRecommended }
-                    if !other.isEmpty {
+                    if !item.otherResolutions.isEmpty {
                         Section(header: Text("SCALED / LOW RES")) {
-                            ForEach(other) { mode in
+                            ForEach(item.otherResolutions) { mode in
                                 Text("\(mode.userLabel) (\(mode.tier.rawValue))").tag(mode.id as String?)
                             }
                         }
@@ -343,13 +293,96 @@ public struct DisplayCardView: View {
         .padding(.vertical, 2)
     }
 
-    // MARK: - Row 3: Geometry & Power Control
-    private var geometryActionRow: some View {
+    // MARK: - Progressive Disclosure: Advanced Drawer
+    private var advancedDrawerSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button(action: {
+                withAnimation(.easeInOut(duration: AtlasTheme.switchAnimationDuration)) {
+                    item.isAdvancedDrawerExpanded.toggle()
+                }
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: item.isAdvancedDrawerExpanded ? "chevron.down" : "chevron.right")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(AtlasTheme.cobalt)
+
+                    Text(item.isAdvancedDrawerExpanded ? "HIDE DETAILS" : "HARDWARE & COLOR CONTROLS")
+                        .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
+                        .foregroundStyle(AtlasTheme.cobalt)
+
+                    Spacer()
+                }
+                .padding(.vertical, 4)
+            }
+            .buttonStyle(.plain)
+
+            if item.isAdvancedDrawerExpanded {
+                VStack(alignment: .leading, spacing: 8) {
+                    colorPillsAndProfileRow
+                    geometryAndInputRow
+                }
+                .padding(10)
+                .background(AtlasTheme.surfaceHeader)
+                .overlay(
+                    Rectangle().stroke(AtlasTheme.borderMedium, lineWidth: AtlasTheme.borderWidth)
+                )
+            }
+        }
+    }
+
+    // MARK: - Advanced Drawer Sub-Row 1: Color Switches & ICC Profile
+    private var colorPillsAndProfileRow: some View {
+        HStack(spacing: 8) {
+            // Force RGB Switch
+            HStack(spacing: 5) {
+                AtlasSwitch(
+                    isOn: Binding(
+                        get: { item.isForceRGBActive },
+                        set: { _ in store.toggleForceRGB(item) }
+                    ),
+                    activeColor: AtlasTheme.cobalt
+                )
+                Text("RGB 4:4:4")
+                    .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
+                    .foregroundStyle(item.isForceRGBActive ? AtlasTheme.textPrimary : AtlasTheme.textMuted)
+            }
+
+            // HDR Switch
+            HStack(spacing: 5) {
+                AtlasSwitch(
+                    isOn: Binding(
+                        get: { item.isHDREnabled },
+                        set: { _ in store.toggleHDR(item) }
+                    ),
+                    activeColor: AtlasTheme.successGreen
+                )
+                Text("HDR")
+                    .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
+                    .foregroundStyle(item.isHDREnabled ? AtlasTheme.textPrimary : AtlasTheme.textMuted)
+            }
+
+            Spacer()
+
+            Picker("", selection: profileBinding) {
+                Text("ICC: Auto").tag("")
+                ForEach(store.colorProfiles) { profile in
+                    Text(profile.name).tag(profile.name)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .controlSize(.small)
+            .frame(width: AtlasTheme.pickerWidth)
+        }
+    }
+
+    // MARK: - Advanced Drawer Sub-Row 2: Geometry, Input Source & Power
+    private var geometryAndInputRow: some View {
         HStack(spacing: 6) {
             HStack(spacing: 4) {
                 Image(systemName: "rotate.right")
                     .font(.system(size: AtlasTheme.fontCaptionMedium))
-                    .foregroundColor(AtlasTheme.textMuted)
+                    .foregroundStyle(AtlasTheme.textMuted)
 
                 Picker("", selection: rotationBinding) {
                     ForEach(DisplayRotationAngle.allCases, id: \.self) { angle in
@@ -365,7 +398,7 @@ public struct DisplayCardView: View {
             HStack(spacing: 4) {
                 Image(systemName: "rectangle.2.swap")
                     .font(.system(size: AtlasTheme.fontCaptionMedium))
-                    .foregroundColor(AtlasTheme.textMuted)
+                    .foregroundStyle(AtlasTheme.textMuted)
 
                 Picker("", selection: mirrorBinding) {
                     Text("Mirror: Off").tag(CGDirectDisplayID(0))
@@ -376,14 +409,14 @@ public struct DisplayCardView: View {
                 .labelsHidden()
                 .pickerStyle(.menu)
                 .controlSize(.small)
-                .frame(width: 140)
+                .frame(width: 110)
             }
 
             if !item.isBuiltin && !item.isVirtual {
                 HStack(spacing: 4) {
                     Image(systemName: "cable.connector")
                         .font(.system(size: AtlasTheme.fontCaptionMedium))
-                        .foregroundColor(AtlasTheme.textMuted)
+                        .foregroundStyle(AtlasTheme.textMuted)
 
                     Picker("", selection: inputSourceBinding) {
                         Text("Input: Auto").tag(nil as DDCInputSource?)
@@ -408,6 +441,7 @@ public struct DisplayCardView: View {
         }
     }
 
+    // MARK: - Bindings
     private var rotationBinding: Binding<DisplayRotationAngle> {
         Binding(
             get: { item.rotation },

@@ -51,16 +51,16 @@ public struct AppMenuView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "display.trianglebadge.exclamationmark")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(AtlasTheme.warningOrange)
+                        .foregroundStyle(AtlasTheme.warningOrange)
 
                     Text("[NO MONITORS DETECTED ON IOKIT BUS]")
                         .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
-                        .foregroundColor(AtlasTheme.warningOrange)
+                        .foregroundStyle(AtlasTheme.warningOrange)
                 }
 
                 Text("Check Thunderbolt/HDMI cable or create a software dummy screen below.")
                     .font(.system(size: AtlasTheme.fontCaptionMedium))
-                    .foregroundColor(AtlasTheme.textMuted)
+                    .foregroundStyle(AtlasTheme.textMuted)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 10)
 
@@ -73,7 +73,7 @@ public struct AppMenuView: View {
                         Text("Rescan Hardware Bus")
                             .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .bold, design: .monospaced))
                     }
-                    .foregroundColor(AtlasTheme.cobalt)
+                    .foregroundStyle(AtlasTheme.cobalt)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(AtlasTheme.surfaceCard)
@@ -102,18 +102,18 @@ public struct AppMenuView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("WORKSPACE")
                     .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
-                    .foregroundColor(AtlasTheme.textMuted)
+                    .foregroundStyle(AtlasTheme.textMuted)
                     .tracking(AtlasTheme.trackingTight)
                 Text("OpenDisplay")
                     .font(.system(size: AtlasTheme.fontHeadline, weight: .bold))
-                    .foregroundColor(AtlasTheme.cobalt)
+                    .foregroundStyle(AtlasTheme.cobalt)
             }
 
             Spacer()
 
             Text("ARM64 NATIVE")
                 .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .bold))
-                .foregroundColor(AtlasTheme.cobaltDark)
+                .foregroundStyle(AtlasTheme.cobaltDark)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
                 .background(AtlasTheme.electricLime)
@@ -130,7 +130,7 @@ public struct AppMenuView: View {
         .overlay(
             Rectangle()
                 .frame(height: AtlasTheme.borderWidth)
-                .foregroundColor(AtlasTheme.borderDefault),
+                .foregroundStyle(AtlasTheme.borderDefault),
             alignment: .bottom
         )
     }
@@ -147,7 +147,7 @@ public struct AppMenuView: View {
                     Text("RESCAN")
                         .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
                 }
-                .foregroundColor(AtlasTheme.textBody)
+                .foregroundStyle(AtlasTheme.textBody)
             }
             .buttonStyle(.plain)
 
@@ -155,7 +155,7 @@ public struct AppMenuView: View {
 
             Text("V2 · 100% FREE · ZERO TELEMETRY")
                 .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
-                .foregroundColor(AtlasTheme.textMuted)
+                .foregroundStyle(AtlasTheme.textMuted)
                 .tracking(AtlasTheme.trackingTight)
 
             Spacer()
@@ -165,7 +165,7 @@ public struct AppMenuView: View {
             }) {
                 Text("Quit")
                     .font(.system(size: AtlasTheme.fontBodySmall, weight: .medium))
-                    .foregroundColor(AtlasTheme.textBody)
+                    .foregroundStyle(AtlasTheme.textBody)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .background(AtlasTheme.surfaceCard)
@@ -181,7 +181,7 @@ public struct AppMenuView: View {
         .overlay(
             Rectangle()
                 .frame(height: AtlasTheme.borderWidth)
-                .foregroundColor(AtlasTheme.borderDefault),
+                .foregroundStyle(AtlasTheme.borderDefault),
             alignment: .top
         )
     }

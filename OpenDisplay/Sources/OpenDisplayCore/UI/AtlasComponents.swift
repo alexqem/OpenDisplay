@@ -15,13 +15,13 @@ public struct AtlasEyebrow: View {
         HStack(spacing: 6) {
             Text(title.uppercased())
                 .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
-                .foregroundColor(AtlasTheme.textMuted)
+                .foregroundStyle(AtlasTheme.textMuted)
                 .tracking(AtlasTheme.trackingTight)
             Spacer()
             if let trailing {
                 Text(trailing)
                     .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
-                    .foregroundColor(AtlasTheme.cobalt)
+                    .foregroundStyle(AtlasTheme.cobalt)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(AtlasTheme.cobaltSofter)
@@ -53,7 +53,7 @@ public struct AtlasBadge: View {
     public var body: some View {
         Text(text)
             .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .bold))
-            .foregroundColor(foregroundColor)
+            .foregroundStyle(foregroundColor)
             .padding(.horizontal, 7)
             .padding(.vertical, 2)
             .background(backgroundColor)
@@ -145,7 +145,7 @@ public struct AtlasPillButton: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
-                .foregroundColor(isActive ? .white : AtlasTheme.cobalt)
+                .foregroundStyle(isActive ? .white : AtlasTheme.cobalt)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(isActive ? AtlasTheme.cobalt : AtlasTheme.surfaceCard)
@@ -171,7 +171,7 @@ public struct AtlasIconButton: View {
         Button(action: action) {
             Image(systemName: systemName)
                 .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
-                .foregroundColor(AtlasTheme.cobalt)
+                .foregroundStyle(AtlasTheme.cobalt)
                 .frame(width: AtlasTheme.iconButtonSide, height: AtlasTheme.iconButtonSide)
                 .background(AtlasTheme.surfaceCard)
                 .overlay(
@@ -189,7 +189,7 @@ public struct AtlasDivider: View {
     public var body: some View {
         Rectangle()
             .frame(height: AtlasTheme.borderWidth)
-            .foregroundColor(AtlasTheme.borderDefault)
+            .foregroundStyle(AtlasTheme.borderDefault)
     }
 }
 
@@ -258,7 +258,7 @@ public struct AtlasToggleRow<Trailing: View>: View {
         HStack(spacing: 8) {
             Text(title)
                 .font(.system(size: AtlasTheme.fontBodySmall, weight: .semibold))
-                .foregroundColor(AtlasTheme.textBody)
+                .foregroundStyle(AtlasTheme.textBody)
             Spacer()
             trailing
             AtlasSwitch(isOn: $isOn)

@@ -59,7 +59,7 @@ public struct PresetsSectionView: View {
                         .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
                         .lineLimit(1)
                 }
-                .foregroundColor(AtlasTheme.cobalt)
+                .foregroundStyle(AtlasTheme.cobalt)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(AtlasTheme.surfaceCard)
@@ -112,7 +112,7 @@ public struct VirtualSectionView: View {
 
                 Text("HiDPI")
                     .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
-                    .foregroundColor(AtlasTheme.textBody)
+                    .foregroundStyle(AtlasTheme.textBody)
                 AtlasSwitch(isOn: $store.isHiDPIEnabled, activeColor: AtlasTheme.cobalt)
 
                 Spacer()
@@ -126,7 +126,7 @@ public struct VirtualSectionView: View {
                         Text("Create")
                             .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .bold))
                     }
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .background(AtlasTheme.cobalt)
@@ -144,14 +144,14 @@ public struct VirtualSectionView: View {
                             HStack(spacing: 4) {
                                 Text(chip.name)
                                     .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
-                                    .foregroundColor(AtlasTheme.cobalt)
+                                    .foregroundStyle(AtlasTheme.cobalt)
                                     .lineLimit(1)
                                 Button {
                                     store.removeVirtualDisplay(id: chip.id)
                                 } label: {
                                     Image(systemName: "xmark")
                                         .font(.system(size: 8, weight: .bold))
-                                        .foregroundColor(AtlasTheme.textMuted)
+                                        .foregroundStyle(AtlasTheme.textMuted)
                                 }
                                 .buttonStyle(.plain)
                             }

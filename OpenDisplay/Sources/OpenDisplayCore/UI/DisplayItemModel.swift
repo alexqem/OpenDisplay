@@ -26,8 +26,16 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
     @Published public var rotation: DisplayRotationAngle = .standard
     @Published public var colorProfileName: String?
     @Published public var inputSource: DDCInputSource?
-    @Published public var availableResolutions: [DisplayResolutionDescriptor] = []
+    @Published public var availableResolutions: [DisplayResolutionDescriptor] = [] {
+        didSet {
+            recommendedResolutions = availableResolutions.filter { $0.isRecommended }
+            otherResolutions = availableResolutions.filter { !$0.isRecommended }
+        }
+    }
+    @Published public private(set) var recommendedResolutions: [DisplayResolutionDescriptor] = []
+    @Published public private(set) var otherResolutions: [DisplayResolutionDescriptor] = []
     @Published public var selectedResolutionId: String?
+    @Published public var isAdvancedDrawerExpanded: Bool = false
     @Published public var volumeBeforeMute: Double?
     @Published public var capabilities: DisplayCapabilities = .fallback
 
