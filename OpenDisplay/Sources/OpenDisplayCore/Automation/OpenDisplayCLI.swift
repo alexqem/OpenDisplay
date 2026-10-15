@@ -18,6 +18,9 @@ public enum CLICommand: Equatable, Sendable {
     case setResolution(target: String, width: Int, height: Int, isHiDPI: Bool)
     case listResolutions(target: String)
     case listProfiles
+    case linkGroup(master: String, slave: String, offset: Double)
+    case unlinkGroup(slave: String)
+    case listGroups
     case help
     case unknown(String)
 }
@@ -147,6 +150,20 @@ public enum OpenDisplayCLI {
 
         case "profiles", "list-profiles":
             return .listProfiles
+
+        case "link-group", "group-link":
+            let master = parseFlag(AutomationConstants.flagMaster, arguments: tail)
+            let slave = parseFlag(AutomationConstants.flagSlave, arguments: tail)
+            let offsetStr = parseFlag(AutomationConstants.flagOffset, arguments: tail, defaultValue: "0.0")
+            let offset = Double(offsetStr) ?? 0.0
+            return .linkGroup(master: master, slave: slave, offset: offset)
+
+        case "unlink-group", "group-unlink":
+            let slave = parseFlag(AutomationConstants.flagSlave, arguments: tail)
+            return .unlinkGroup(slave: slave)
+
+        case "groups", "list-groups":
+            return .listGroups
 
         default:
             return .unknown(verb)

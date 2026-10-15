@@ -38,6 +38,9 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
     @Published public var isAdvancedDrawerExpanded: Bool = false
     @Published public var volumeBeforeMute: Double?
     @Published public var capabilities: DisplayCapabilities = .fallback
+    @Published public var syncGroupMasterID: CGDirectDisplayID?
+    @Published public var isGroupMaster: Bool = false
+    @Published public var syncBrightnessOffset: Double = 0.0
 
     public init(
         id: CGDirectDisplayID,

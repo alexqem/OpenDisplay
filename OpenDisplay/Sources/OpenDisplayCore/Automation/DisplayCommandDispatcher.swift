@@ -128,6 +128,45 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
         return DisplayPowerStateController.shared.setDisplayOrientation(displayID: displayID, angle: angle)
     }
 
+    // MARK: - Display Group Synchronization (Master-Slave)
+
+    /// Adjust brightness on a master display and automatically propagate calibrated offsets to linked slaves
+    public func setMasterBrightness(displayID: CGDirectDisplayID, level: Float) -> Bool {
+        let masterSuccess = setBrightness(displayID: displayID, level: level)
+        guard let group = DisplayGroupManager.shared.groupForMaster(displayID: displayID),
+              group.isBrightnessSyncEnabled else {
+            return masterSuccess
+        }
+
+        for member in group.members {
+            let target = DisplayGroup.calculateTargetLevel(
+                masterLevel: Double(level),
+                offset: member.brightnessOffset
+            )
+            _ = setBrightness(displayID: member.displayID, level: Float(target))
+        }
+        return masterSuccess
+    }
+
+    /// Adjust volume on a master display and automatically propagate calibrated offsets to linked slaves
+    public func setMasterVolume(displayID: CGDirectDisplayID, level: Float) -> Bool {
+        let masterSuccess = setVolume(displayID: displayID, level: level)
+        guard let group = DisplayGroupManager.shared.groupForMaster(displayID: displayID),
+              group.varVolumeSyncEnabled else {
+            return masterSuccess
+        }
+
+        for member in group.members {
+            let target = DisplayGroup.calculateTargetLevel(
+                masterLevel: Double(level),
+                offset: member.volumeOffset
+            )
+            _ = setVolume(displayID: member.displayID, level: Float(target))
+        }
+        return masterSuccess
+    }
+
+
     /// Software disconnect / blank display
     public func disconnect(displayID: CGDirectDisplayID) -> Bool {
         return DisplayPowerStateController.shared.disconnectDisplay(displayID: displayID)
@@ -325,6 +364,34 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
             let profiles = availableColorProfiles()
             let names = profiles.map { $0.name }.joined(separator: ", ")
             return (true, names.isEmpty ? "No ICC profiles found" : names)
+
+        case .linkGroup(let master, let slave, let offset):
+            guard let mNum = UInt32(master), let sNum = UInt32(slave) else {
+                return (false, "Invalid master or slave display ID")
+            }
+            let mID = CGDirectDisplayID(mNum)
+            let sID = CGDirectDisplayID(sNum)
+            DisplayGroupManager.shared.linkSlave(masterID: mID, slaveID: sID, brightnessOffset: offset)
+            return (true, "Linked slave display \(sID) to master \(mID) with offset \(offset)")
+
+        case .unlinkGroup(let slave):
+            guard let sNum = UInt32(slave) else {
+                return (false, "Invalid slave display ID")
+            }
+            let sID = CGDirectDisplayID(sNum)
+            DisplayGroupManager.shared.unlinkSlave(slaveID: sID)
+            return (true, "Unlinked display \(sID) from sync groups")
+
+        case .listGroups:
+            let groups = DisplayGroupManager.shared.getAllGroups()
+            if groups.isEmpty {
+                return (true, "No display sync groups configured")
+            }
+            let desc = groups.map { g in
+                let membersDesc = g.members.map { "Display \($0.displayID) (offset: \($0.brightnessOffset))" }.joined(separator: ", ")
+                return "Group '\(g.name)' [Master: \(g.masterDisplayID)] -> Slaves: [\(membersDesc)]"
+            }.joined(separator: "\n")
+            return (true, desc)
 
         case .unknown(let cmd):
             return (false, "Unknown command: \(cmd)")

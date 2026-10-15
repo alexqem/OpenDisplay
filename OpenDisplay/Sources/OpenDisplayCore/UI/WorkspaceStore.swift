@@ -78,6 +78,21 @@ public final class WorkspaceStore: ObservableObject {
             let modes = dispatcher.availableResolutions(for: info.id)
             model.availableResolutions = modes
             model.selectedResolutionId = modes.first(where: { $0.isCurrent })?.id
+
+            // Group synchronization state
+            if let group = DisplayGroupManager.shared.groupForMaster(displayID: info.id) {
+                model.isGroupMaster = true
+                model.syncGroupMasterID = nil
+            } else if let group = DisplayGroupManager.shared.groupContaining(displayID: info.id) {
+                model.isGroupMaster = false
+                model.syncGroupMasterID = group.masterDisplayID
+                model.syncBrightnessOffset = group.member(for: info.id)?.brightnessOffset ?? 0.0
+            } else {
+                model.isGroupMaster = false
+                model.syncGroupMasterID = nil
+                model.syncBrightnessOffset = 0.0
+            }
+
             refreshed.append(model)
         }
         displays = refreshed
@@ -104,18 +119,32 @@ public final class WorkspaceStore: ObservableObject {
     public func setBrightness(_ item: DisplayItemModel, _ value: Double, immediate: Bool = false) {
         item.brightness = value
 
+        // If this display is a group master, synchronously update linked slave models in UI
+        if item.isGroupMaster, let group = DisplayGroupManager.shared.groupForMaster(displayID: item.id), group.isBrightnessSyncEnabled {
+            for member in group.members {
+                if let slaveModel = displays.first(where: { $0.id == member.displayID }) {
+                    let target = DisplayGroup.calculateTargetLevel(masterLevel: value, offset: member.brightnessOffset)
+                    slaveModel.brightness = target
+                }
+            }
+        }
+
         if immediate {
             brightnessDebounceTasks[item.id]?.cancel()
             brightnessDebounceTasks.removeValue(forKey: item.id)
-            _ = dispatcher.setBrightness(displayID: item.id, level: Float(value))
+            _ = item.isGroupMaster
+                ? dispatcher.setMasterBrightness(displayID: item.id, level: Float(value))
+                : dispatcher.setBrightness(displayID: item.id, level: Float(value))
             return
         }
 
         brightnessDebounceTasks[item.id]?.cancel()
-        brightnessDebounceTasks[item.id] = Task { @MainActor [weak self, id = item.id] in
+        brightnessDebounceTasks[item.id] = Task { @MainActor [weak self, id = item.id, isMaster = item.isGroupMaster] in
             try? await Task.sleep(nanoseconds: MediaKeyConstants.ddcDebounceNanoseconds)
             guard !Task.isCancelled, let self = self else { return }
-            _ = self.dispatcher.setBrightness(displayID: id, level: Float(value))
+            _ = isMaster
+                ? self.dispatcher.setMasterBrightness(displayID: id, level: Float(value))
+                : self.dispatcher.setBrightness(displayID: id, level: Float(value))
             self.brightnessDebounceTasks.removeValue(forKey: id)
         }
     }
@@ -127,18 +156,32 @@ public final class WorkspaceStore: ObservableObject {
             item.volumeBeforeMute = nil
         }
 
+        // If this display is a group master, update slave models in UI
+        if item.isGroupMaster, let group = DisplayGroupManager.shared.groupForMaster(displayID: item.id), group.varVolumeSyncEnabled {
+            for member in group.members {
+                if let slaveModel = displays.first(where: { $0.id == member.displayID }) {
+                    let target = DisplayGroup.calculateTargetLevel(masterLevel: value, offset: member.volumeOffset)
+                    slaveModel.volume = target
+                }
+            }
+        }
+
         if immediate {
             volumeDebounceTasks[item.id]?.cancel()
             volumeDebounceTasks.removeValue(forKey: item.id)
-            _ = dispatcher.setVolume(displayID: item.id, level: Float(value))
+            _ = item.isGroupMaster
+                ? dispatcher.setMasterVolume(displayID: item.id, level: Float(value))
+                : dispatcher.setVolume(displayID: item.id, level: Float(value))
             return
         }
 
         volumeDebounceTasks[item.id]?.cancel()
-        volumeDebounceTasks[item.id] = Task { @MainActor [weak self, id = item.id] in
+        volumeDebounceTasks[item.id] = Task { @MainActor [weak self, id = item.id, isMaster = item.isGroupMaster] in
             try? await Task.sleep(nanoseconds: MediaKeyConstants.ddcDebounceNanoseconds)
             guard !Task.isCancelled, let self = self else { return }
-            _ = self.dispatcher.setVolume(displayID: id, level: Float(value))
+            _ = isMaster
+                ? self.dispatcher.setMasterVolume(displayID: id, level: Float(value))
+                : self.dispatcher.setVolume(displayID: id, level: Float(value))
             self.volumeDebounceTasks.removeValue(forKey: id)
         }
     }
@@ -391,5 +434,24 @@ public final class WorkspaceStore: ObservableObject {
             pipDisplayID = displayID
         }
     }
+
+    // MARK: - Display Sync Groups
+
+    public func linkDisplayToGroup(masterID: CGDirectDisplayID, slaveID: CGDirectDisplayID, brightnessOffset: Double = 0.0) {
+        DisplayGroupManager.shared.linkSlave(masterID: masterID, slaveID: slaveID, brightnessOffset: brightnessOffset)
+        refresh()
+    }
+
+    public func unlinkDisplayFromGroup(slaveID: CGDirectDisplayID) {
+        DisplayGroupManager.shared.unlinkSlave(slaveID: slaveID)
+        refresh()
+    }
+
+    public func updateGroupOffset(_ item: DisplayItemModel, offset: Double) {
+        guard let masterID = item.syncGroupMasterID else { return }
+        DisplayGroupManager.shared.linkSlave(masterID: masterID, slaveID: item.id, brightnessOffset: offset)
+        item.syncBrightnessOffset = offset
+    }
 }
 #endif
+

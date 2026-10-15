@@ -141,3 +141,15 @@ public enum ResolutionConstants {
     ]
 }
 
+/// Constants for Multi-Display Master-Slave Synchronization Groups
+public enum DisplayGroupConstants {
+    public static let defaultOffset: Double = 0.0
+    public static let minOffset: Double = -0.5
+    public static let maxOffset: Double = 0.5
+    public static let minLevel: Double = 0.0
+    public static let maxLevel: Double = 1.0
+    public static let maxGroupNameLength: Int = 32
+    public static let defaultGroupName: String = "Display Group"
+}
+
+

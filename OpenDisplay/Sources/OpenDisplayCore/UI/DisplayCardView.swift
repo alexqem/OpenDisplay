@@ -71,6 +71,11 @@ public struct DisplayCardView: View {
             if item.isHiDPI {
                 AtlasBadge("HiDPI", style: .muted)
             }
+            if item.isGroupMaster {
+                AtlasBadge("SYNC MASTER", style: .lime)
+            } else if item.syncGroupMasterID != nil {
+                AtlasBadge("SYNC SLAVE", style: .brand)
+            }
 
             Spacer()
 
@@ -320,6 +325,7 @@ public struct DisplayCardView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     colorPillsAndProfileRow
                     geometryAndInputRow
+                    syncGroupRow
                 }
                 .padding(AtlasTheme.drawerPadding)
                 .background(AtlasTheme.surfaceHeader)
@@ -441,6 +447,48 @@ public struct DisplayCardView: View {
         }
     }
 
+    // MARK: - Advanced Drawer Sub-Row 3: Display Sync Group & Calibration Offset
+    private var syncGroupRow: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "link")
+                .font(.system(size: AtlasTheme.fontCaptionMedium))
+                .foregroundStyle(AtlasTheme.textMuted)
+
+            Picker("", selection: groupMasterBinding) {
+                Text("Sync: Independent").tag(CGDirectDisplayID(0))
+                ForEach(store.displays.filter { $0.id != item.id }) { potentialMaster in
+                    Text("Follow: \(potentialMaster.name)").tag(potentialMaster.id)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .controlSize(.small)
+            .frame(width: AtlasTheme.pickerMirrorWidth)
+
+            if item.syncGroupMasterID != nil {
+                HStack(spacing: 4) {
+                    Text("Offset:")
+                        .font(.system(size: AtlasTheme.fontCaptionSmall, design: .monospaced))
+                        .foregroundStyle(AtlasTheme.textMuted)
+
+                    Picker("", selection: groupOffsetBinding) {
+                        Text("-20%").tag(-0.20)
+                        Text("-10%").tag(-0.10)
+                        Text("0%").tag(0.0)
+                        Text("+10%").tag(0.10)
+                        Text("+20%").tag(0.20)
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .controlSize(.small)
+                    .frame(width: AtlasTheme.pickerNarrowWidth)
+                }
+            }
+
+            Spacer()
+        }
+    }
+
     // MARK: - Bindings
     private var rotationBinding: Binding<DisplayRotationAngle> {
         Binding(
@@ -483,6 +531,28 @@ public struct DisplayCardView: View {
                 guard let modeId,
                       let mode = item.availableResolutions.first(where: { $0.id == modeId }) else { return }
                 store.setResolution(item, mode: mode)
+            }
+        )
+    }
+
+    private var groupMasterBinding: Binding<CGDirectDisplayID> {
+        Binding(
+            get: { item.syncGroupMasterID ?? CGDirectDisplayID(0) },
+            set: { newMasterID in
+                if newMasterID == 0 {
+                    store.unlinkDisplayFromGroup(slaveID: item.id)
+                } else {
+                    store.linkDisplayToGroup(masterID: newMasterID, slaveID: item.id, brightnessOffset: item.syncBrightnessOffset)
+                }
+            }
+        )
+    }
+
+    private var groupOffsetBinding: Binding<Double> {
+        Binding(
+            get: { item.syncBrightnessOffset },
+            set: { newOffset in
+                store.updateGroupOffset(item, offset: newOffset)
             }
         )
     }
