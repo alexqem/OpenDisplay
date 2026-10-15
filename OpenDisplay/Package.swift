@@ -12,11 +12,11 @@ let package = Package(
             targets: ["OpenDisplayCore"]
         ),
         .executable(
-            name: "OpenDisplay",
+            name: "OpenDisplayApp",
             targets: ["OpenDisplayApp"]
         ),
         .executable(
-            name: "opendisplay",
+            name: "OpenDisplayCLI",
             targets: ["OpenDisplayCLI"]
         )
     ],
