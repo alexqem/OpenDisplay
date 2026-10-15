@@ -16,7 +16,6 @@ public struct AtlasEyebrow: View {
             Text(title.uppercased())
                 .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
                 .foregroundStyle(AtlasTheme.textMuted)
-                .tracking(AtlasTheme.trackingTight)
             Spacer()
             if let trailing {
                 Text(trailing)

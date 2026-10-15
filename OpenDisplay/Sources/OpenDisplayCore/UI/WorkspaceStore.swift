@@ -168,6 +168,10 @@ public final class WorkspaceStore: ObservableObject {
         }
     }
 
+    public func toggleXDROverdrive(_ item: DisplayItemModel) {
+        item.isXDROverdriveEnabled.toggle()
+    }
+
     public func toggleHDR(_ item: DisplayItemModel) {
         let target = !item.isHDREnabled
         if dispatcher.setHDR(displayID: item.id, enabled: target) {

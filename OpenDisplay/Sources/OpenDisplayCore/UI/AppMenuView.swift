@@ -103,7 +103,6 @@ public struct AppMenuView: View {
                 Text("WORKSPACE")
                     .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
                     .foregroundStyle(AtlasTheme.textMuted)
-                    .tracking(AtlasTheme.trackingTight)
                 Text("OpenDisplay")
                     .font(.system(size: AtlasTheme.fontHeadline, weight: .bold))
                     .foregroundStyle(AtlasTheme.cobalt)
@@ -156,7 +155,6 @@ public struct AppMenuView: View {
             Text("V2 · 100% FREE · ZERO TELEMETRY")
                 .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
                 .foregroundStyle(AtlasTheme.textMuted)
-                .tracking(AtlasTheme.trackingTight)
 
             Spacer()
 
