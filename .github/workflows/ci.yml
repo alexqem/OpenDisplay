@@ -41,7 +41,7 @@ jobs:
           mkdir -p build/OpenDisplay.app/Contents/Resources
           
           # Copy release executables
-          cp OpenDisplay/.build/release/OpenDisplayApp build/OpenDisplay.app/Contents/MacOS/OpenDisplay
+          cp OpenDisplay/.build/release/OpenDisplay build/OpenDisplay.app/Contents/MacOS/OpenDisplay
           cp OpenDisplay/.build/release/opendisplay build/OpenDisplay.app/Contents/MacOS/opendisplay
           chmod +x build/OpenDisplay.app/Contents/MacOS/OpenDisplay
           chmod +x build/OpenDisplay.app/Contents/MacOS/opendisplay
