@@ -22,7 +22,7 @@ public final class WorkspaceStore: ObservableObject {
     public static let shared = WorkspaceStore()
 
     @Published public private(set) var displays: [DisplayItemModel] = []
-    @Published public private(set) var presets: [DisplayPreset] = []
+    @Published public internal(set) var presets: [DisplayPreset] = []
     @Published public private(set) var virtualDisplays: [VirtualDisplayChip] = []
     @Published public private(set) var isTrueToneSupported: Bool = false
 
@@ -40,8 +40,8 @@ public final class WorkspaceStore: ObservableObject {
 
     public let colorProfiles: [ICCProfileInfo]
 
-    private let dispatcher = DisplayCommandDispatcher.shared
-    private let mediaKeysListener = MediaKeysListener()
+    internal let dispatcher = DisplayCommandDispatcher.shared
+    internal let mediaKeysListener = MediaKeysListener()
 
     // DDC I2C throttling tasks to prevent bus flooding during rapid slider motion
     private var brightnessDebounceTasks: [CGDirectDisplayID: Task<Void, Never>] = [:]
