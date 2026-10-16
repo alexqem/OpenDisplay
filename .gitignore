@@ -24,3 +24,6 @@ schemas/
 BetterDisplay-v5.1.1.dmg
 .agents/
 skills-lock.json
+betterdisplay_structure/
+**/betterdisplay_structure/
+
