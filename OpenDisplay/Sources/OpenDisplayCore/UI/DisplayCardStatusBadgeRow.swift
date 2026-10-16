@@ -17,8 +17,6 @@ public struct DisplayCardStatusBadgeRow: View {
                 AtlasBadge("Virtual", style: .brand)
             } else if item.capabilities.supportsDDC {
                 AtlasBadge("DDC/CI", style: .success)
-            } else {
-                AtlasBadge("Gamma LUT", style: .warning)
             }
 
             if item.capabilities.supports10BitDeepColor {

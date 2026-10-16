@@ -11,9 +11,11 @@ OpenDisplay provides complete, fine-grained control over external and built-in d
 - **Master-Slave Display Synchronization & Linked Controls:**
   - Group multiple displays with designated Master and Slave monitors.
   - Linked synchronized brightness, volume, and power adjustments with per-slave calibration offsets (`-50%` to `+50%`).
-- **Native Resolution & HiDPI Mode Switcher:**
-  - Full enumeration of physical and virtual display modes via `SkyLight` / CoreGraphics.
-  - Intelligent classification: `★ RECOMMENDED` Retina HiDPI, native, scaled HiDPI, standard 1x, and non-native aspect ratios.
+- **Native Resolution & Independent Refresh Rate Controls (BetterDisplay Parity):**
+  - Independent, clean dropdowns for **Resolution** and **Refresh Rate** directly visible on the display card without nested submenu hurdles.
+  - Dual-tier resolution categorization: **HiDPI Scaled Resolutions** (2x Retina supersampling) and **Standard & Native Modes** (1:1 native panel pixel matching).
+  - Dynamic Refresh Rate switching (e.g. 60Hz, 120Hz ProMotion, 144Hz, 50Hz, 48Hz, 47.95Hz) matched to current dimensions via SkyLight and CoreGraphics.
+  - Quick progressive disclosure drawer for Color Mode (Full Range RGB 4:4:4 vs Limited Range YCbCr), HDR toggle, ColorSync ICC Profile selection/reset, Display Rotation, and DDC input source switching.
 - **Hardware DDC/CI & Apple DisplayServices Control:**
   - Direct hardware brightness, contrast, volume, and video input source switching (`dp1`, `dp2`, `hdmi1`, `hdmi2`, `usbc` via VCP `0x60`).
   - Native Apple DisplayServices support for Studio Display, Pro Display XDR, and built-in panels.
@@ -28,11 +30,12 @@ OpenDisplay provides complete, fine-grained control over external and built-in d
 - **Ambient Brightness Synchronization:**
   - Real-time synchronization of external display brightness with the MacBook's ambient light sensor and built-in screen.
   - Anti-jitter filtering and adjustable sensitivity factor (0.5x–1.5x).
-- **Color Calibration & Pixel Formats:**
-  - Raw 128-byte EDID parsing with checksum validation.
-  - Force RGB 4:4:4 output by stripping CTA-861 YCbCr capability flags.
-  - 10-Bit Deep Color (`ARGB2101010`) inspection and HDR switching.
-  - ICC ColorSync profile enumeration and per-display profile assignment.
+- **Color Calibration, Hardware Connection Mode & Pixel Formats:**
+  - **Hardware Connection Mode Switching (BetterDisplay Parity):** Direct transceiver digital link control via QuartzCore `CADisplay` (`set digital mode RGB_8bit` vs `YCbCr444_8bit`), achieving genuine hardware-level contrast and native black levels with transceiver re-negotiation.
+  - Raw 128-byte EDID parsing with checksum validation and override generation.
+  - Hardware color appearance remapping (Standard, Inverted, Grayscale, Inverted Grayscale) via `IOMobileFramebufferSetColorRemapMode` with gamma LUT fallback.
+  - 10-Bit Deep Color (`ARGB2101010`) inspection and 4-argument SkyLight HDR switching (`SLSDisplaySetHDRModeEnabled`).
+  - ICC ColorSync profile enumeration with strict monitor (`mntr`) and `RGB` header validation, avoiding fatal SkyLight aborts.
 - **Screen Mirroring & Canvas Arrangement:**
   - Hardware display mirroring and cloning via `CGConfigureDisplayMirrorOfDisplay`.
   - Display canvas coordinates arrangement and primary display switching (`origin: 0, 0`).

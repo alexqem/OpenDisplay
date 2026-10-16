@@ -11,49 +11,27 @@ public struct DisplayColorModeSectionView: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            // Submenu Accordion Header
-            Button(action: {
-                withAnimation(.easeInOut(duration: AtlasTheme.switchAnimationDuration)) {
-                    item.isColorModeExpanded.toggle()
-                }
-            }) {
-                HStack(spacing: 6) {
-                    Image(systemName: "paintpalette.fill")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Color.accentColor)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "paintpalette.fill")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Color.accentColor)
 
-                    Text("Color Mode")
-                        .font(.system(size: AtlasTheme.fontBodySmall, weight: .medium))
-                        .foregroundStyle(Color.primary)
+                Text("Color Mode")
+                    .font(.system(size: AtlasTheme.fontBodySmall, weight: .semibold))
+                    .foregroundStyle(Color.primary)
 
-                    Spacer()
-
-                    Image(systemName: item.isColorModeExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundStyle(Color.secondary)
-                }
-                .padding(.vertical, 4)
-                .padding(.horizontal, 8)
-                .background(Color.primary.opacity(0.04))
-                .clipShape(RoundedRectangle(cornerRadius: AtlasTheme.controlRadius, style: .continuous))
+                Spacer()
             }
-            .buttonStyle(.plain)
+            .padding(.horizontal, 2)
 
-            if item.isColorModeExpanded {
-                VStack(alignment: .leading, spacing: 8) {
-                    colorDepthRows
-                    Divider().opacity(0.5)
-                    hdrSection
-                    Divider().opacity(0.5)
-                    gpuDitheringRow
-                    Divider().opacity(0.5)
-                    appearancePresetsSection
-                }
-                .padding(10)
-                .background(Color.primary.opacity(0.03))
-                .clipShape(RoundedRectangle(cornerRadius: AtlasTheme.controlRadius, style: .continuous))
-            }
+            colorDepthRows
+            Divider().opacity(0.5)
+            hdrSection
+            Divider().opacity(0.5)
+            gpuDitheringRow
+            Divider().opacity(0.5)
+            appearancePresetsSection
         }
     }
 

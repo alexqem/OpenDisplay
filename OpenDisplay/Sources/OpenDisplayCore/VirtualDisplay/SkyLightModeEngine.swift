@@ -239,5 +239,80 @@ public final class SkyLightModeEngine: @unchecked Sendable {
             return false
         }
     }
+
+    /// Set refresh rate for the currently active display mode dimensions
+    public func setRefreshRate(displayID: CGDirectDisplayID, targetRate: Double) -> Bool {
+        guard let descFn = getModeDescFn, let getCount = getModeCountFn, let configureFn = configureModeFn else {
+            return false
+        }
+
+        let currentModeNumber = getCurrentMode(displayID: displayID) ?? -1
+        var currentPtW = 0
+        var currentPtH = 0
+        var currentPxW = 0
+
+        var curBuf = [UInt8](repeating: 0, count: 512)
+        if currentModeNumber >= 0, descFn(displayID, currentModeNumber, &curBuf, curBuf.count) == .success {
+            curBuf.withUnsafeBytes { raw in
+                let u32 = raw.bindMemory(to: UInt32.self)
+                currentPtW = Int(u32[2])
+                currentPtH = Int(u32[3])
+                let rowBytes = Int(u32[5])
+                currentPxW = rowBytes > 0 ? (rowBytes / 4) : currentPtW
+            }
+        } else {
+            if let cur = CGDisplayCopyDisplayMode(displayID) {
+                currentPtW = cur.width
+                currentPtH = cur.height
+                currentPxW = cur.pixelWidth
+            }
+        }
+
+        guard currentPtW > 0, currentPtH > 0 else { return false }
+
+        var count: Int32 = 0
+        guard getCount(displayID, &count) == .success, count > 0 else { return false }
+
+        var targetModeNum: Int32?
+        var minDiff = Double.greatestFiniteMagnitude
+
+        for m: Int32 in 0..<count {
+            var buf = [UInt8](repeating: 0, count: 512)
+            if descFn(displayID, m, &buf, buf.count) == .success {
+                buf.withUnsafeBytes { raw in
+                    let u32 = raw.bindMemory(to: UInt32.self)
+                    let modeNum = Int32(u32[0])
+                    let ptW = Int(u32[2])
+                    let ptH = Int(u32[3])
+                    let rowBytes = Int(u32[5])
+                    let pxW = rowBytes > 0 ? (rowBytes / 4) : ptW
+                    let hz = Double(u32[9])
+
+                    if ptW == currentPtW && ptH == currentPtH && (currentPxW == 0 || pxW == currentPxW) {
+                        let diff = abs(hz - targetRate)
+                        if diff < minDiff {
+                            minDiff = diff
+                            targetModeNum = modeNum
+                        }
+                    }
+                }
+            }
+        }
+
+        guard let targetNum = targetModeNum, minDiff < 2.0 else { return false }
+
+        var configRef: CGDisplayConfigRef?
+        CGBeginDisplayConfiguration(&configRef)
+        guard let config = configRef else { return false }
+
+        let status = configureFn(config, displayID, targetNum)
+        if status == .success {
+            CGCompleteDisplayConfiguration(config, .permanently)
+            return true
+        } else {
+            CGCancelDisplayConfiguration(config)
+            return false
+        }
+    }
 }
 #endif

@@ -86,6 +86,11 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
         )
     }
 
+    /// Set refresh rate for currently active mode dimensions
+    public func setRefreshRate(displayID: CGDirectDisplayID, rate: Double) -> Bool {
+        return SkyLightModeEngine.shared.setRefreshRate(displayID: displayID, targetRate: rate)
+    }
+
     /// Create a Virtual Display and register it in the lifecycle manager
     public func createVirtual(config: VirtualDisplayConfig) -> VirtualDisplayController? {
         guard let controller = VirtualDisplayController(config: config) else { return nil }

@@ -23,24 +23,28 @@ public struct DisplayAdvancedControlsDrawerView: View {
                         .font(.system(size: 9, weight: .semibold))
                         .foregroundStyle(Color.secondary)
 
-                    Text("Advanced Controls")
+                    Text(item.isAdvancedDrawerExpanded ? "Hide Display Settings" : "More Display Settings (Color, Rotation, Inputs...)")
                         .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .medium))
                         .foregroundStyle(Color.secondary)
 
                     Spacer()
                 }
-                .padding(.vertical, 2)
+                .padding(.vertical, 3)
             }
             .buttonStyle(.plain)
 
             if item.isAdvancedDrawerExpanded {
                 VStack(alignment: .leading, spacing: 10) {
+                    // Direct flat Color Mode Controls (no nested dropdowns)
                     DisplayColorModeSectionView(item: item)
+
+                    AtlasDivider()
 
                     colorPillsAndProfileRow
 
                     // External display hardware controls: rotation, input source & power
                     if !item.isBuiltin && !item.isVirtual {
+                        AtlasDivider()
                         geometryAndInputRow
                         syncGroupRow
                     }

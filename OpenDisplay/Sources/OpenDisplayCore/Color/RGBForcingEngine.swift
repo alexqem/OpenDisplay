@@ -61,6 +61,57 @@ public enum RGBForcingEngine {
     private typealias IOMFBOpenFunc = @convention(c) (io_service_t, mach_port_t, UInt32, UnsafeMutablePointer<UnsafeMutableRawPointer?>) -> kern_return_t
     private typealias IOMFBSetColorRemapModeFunc = @convention(c) (UnsafeMutableRawPointer, UInt32) -> kern_return_t
 
+    /// Set low-level hardware display connection mode via QuartzCore CADisplay (BetterDisplay parity)
+    /// Switches physical digital link between RGB Full Range and YCbCr 4:4:4 Limited Range in real-time.
+    public static func setConnectionMode(displayID: UInt32, forceRGB: Bool) -> Bool {
+        guard let caDisplayClass = NSClassFromString("CADisplay") as AnyObject as? NSObjectProtocol else {
+            return false
+        }
+        let selDisplays = Selector(("displays"))
+        guard caDisplayClass.responds(to: selDisplays),
+              let displays = caDisplayClass.perform(selDisplays)?.takeUnretainedValue() as? [NSObject] else {
+            return false
+        }
+
+        guard let targetDisplay = displays.first(where: {
+            ($0.value(forKey: "displayId") as? UInt32) == displayID
+        }) else {
+            return false
+        }
+
+        guard let modes = targetDisplay.value(forKey: "availableModes") as? [NSObject],
+              let currentMode = targetDisplay.value(forKey: "currentMode") as? NSObject else {
+            return false
+        }
+
+        let curW = currentMode.value(forKey: "width") as? Int ?? 0
+        let curH = currentMode.value(forKey: "height") as? Int ?? 0
+        let curRate = currentMode.value(forKey: "refreshRate") as? Double ?? 0.0
+
+        let matched = modes.first { mode in
+            let w = mode.value(forKey: "width") as? Int ?? 0
+            let h = mode.value(forKey: "height") as? Int ?? 0
+            let rate = mode.value(forKey: "refreshRate") as? Double ?? 0.0
+            let colorMode = mode.value(forKey: "colorMode") as? String ?? ""
+            let isYCbCr = mode.value(forKey: "colorModeIsYCbCr") as? Bool ?? false
+
+            guard w == curW && h == curH && abs(rate - curRate) < 1.0 else { return false }
+
+            if forceRGB {
+                return !isYCbCr && colorMode.contains("RGBFull")
+            } else {
+                return isYCbCr && (colorMode.contains("YCbCr444") || colorMode.contains("444"))
+            }
+        }
+
+        guard let targetMode = matched else {
+            return false
+        }
+
+        targetDisplay.setValue(targetMode, forKey: "currentMode")
+        return true
+    }
+
     /// Apply Appearance and Color Remap modes directly to the Apple Silicon Framebuffer (BetterDisplay parity)
     /// mode 0 = Standard, 1 = Inverted, 2 = Grayscale, 4 = Inverted Grayscale
     public static func setColorRemapMode(_ mode: UInt32) -> Bool {

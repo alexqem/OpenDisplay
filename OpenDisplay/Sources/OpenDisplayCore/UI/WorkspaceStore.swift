@@ -85,7 +85,17 @@ public final class WorkspaceStore: ObservableObject {
             }
             let modes = dispatcher.availableResolutions(for: info.id)
             model.availableResolutions = modes
-            model.selectedResolutionId = modes.first(where: { $0.isCurrent })?.id
+            let currentMode = modes.first(where: { $0.isCurrent })
+            model.selectedResolutionId = currentMode?.id
+            if let cur = currentMode {
+                model.currentRefreshRate = cur.refreshRate
+                let matchingRates = modes.filter { $0.pointWidth == cur.pointWidth && $0.pointHeight == cur.pointHeight && $0.isHiDPI == cur.isHiDPI }
+                                         .map { $0.refreshRate }
+                model.availableRefreshRates = Array(Set(matchingRates)).sorted(by: >)
+            } else {
+                model.currentRefreshRate = 60.0
+                model.availableRefreshRates = [60.0]
+            }
 
             // Group synchronization state
             if let group = DisplayGroupManager.shared.groupForMaster(displayID: info.id) {
@@ -210,6 +220,19 @@ public final class WorkspaceStore: ObservableObject {
     }
 
     public func setForceRGB(_ item: DisplayItemModel, enabled: Bool) {
+        // First try the true hardware CADisplay connection mode switch (same as BetterDisplay)
+        let switched = RGBForcingEngine.setConnectionMode(displayID: item.id, forceRGB: enabled)
+
+        if switched {
+            item.isForceRGBActive = enabled
+            activeTooltipText = enabled
+                ? "Active: 8-bit SDR RGB Full Range (Hardware CADisplay)"
+                : "Active: 8-bit SDR YCbCr 4:4:4 Limited Range (Hardware CADisplay)"
+            try? GammaDimmingEngine.restoreGamma(displayID: item.id)
+            return
+        }
+
+        // Fallback path: LUT gamma quantization
         if enabled {
             _ = RGBForcingEngine.setColorRemapMode(0)
             try? GammaDimmingEngine.restoreGamma(displayID: item.id)
@@ -231,7 +254,7 @@ public final class WorkspaceStore: ObservableObject {
             var b = table
             _ = CGSetDisplayTransferByTable(item.id, size, &r, &g, &b)
             item.isForceRGBActive = false
-            activeTooltipText = "Active: 8-bit SDR YCbCr 4:4:4 Limited Range"
+            activeTooltipText = "Active: 8-bit SDR YCbCr 4:4:4 Limited Range (LUT)"
         }
     }
 
@@ -342,6 +365,18 @@ public final class WorkspaceStore: ObservableObject {
             refresh()
         } else {
             activeTooltipText = "Failed to switch resolution to \(mode.userLabel)"
+        }
+    }
+
+    public func setRefreshRate(_ item: DisplayItemModel, rate: Double) {
+        let rateString = "\(Int(rate.rounded()))Hz"
+        activeTooltipText = "Switching refresh rate to \(rateString)..."
+        if dispatcher.setRefreshRate(displayID: item.id, rate: rate) {
+            item.currentRefreshRate = rate
+            activeTooltipText = "Refresh rate changed to \(rateString)"
+            refresh()
+        } else {
+            activeTooltipText = "Failed to switch refresh rate to \(rateString)"
         }
     }
 }

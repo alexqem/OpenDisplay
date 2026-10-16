@@ -41,6 +41,8 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
     @Published public private(set) var recommendedResolutions: [DisplayResolutionDescriptor] = []
     @Published public private(set) var otherResolutions: [DisplayResolutionDescriptor] = []
     @Published public var selectedResolutionId: String?
+    @Published public var availableRefreshRates: [Double] = []
+    @Published public var currentRefreshRate: Double = 60.0
     @Published public var isAdvancedDrawerExpanded: Bool = false
     @Published public var volumeBeforeMute: Double?
     @Published public var capabilities: DisplayCapabilities = .fallback

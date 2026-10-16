@@ -63,6 +63,13 @@ public struct DisplayResolutionDescriptor: Identifiable, Equatable, Sendable {
         let rate = "\(Int(refreshRate.rounded()))Hz"
         return "\(pointWidth) × \(pointHeight)\(hiDpiBadge)\(nativeBadge) · \(rate)"
     }
+
+    /// Resolution-only label without refresh rate (for separate Resolution dropdown like BetterDisplay)
+    public var resolutionOnlyLabel: String {
+        let hiDpiBadge = isHiDPI ? " (HiDPI)" : ""
+        let nativeBadge = isNative ? " (Native)" : ""
+        return "\(pointWidth) × \(pointHeight)\(hiDpiBadge)\(nativeBadge)"
+    }
 }
 
 /// Pure functional classifier for display resolution modes (100% testable without hardware)
