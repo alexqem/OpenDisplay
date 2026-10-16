@@ -44,10 +44,11 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
     @Published public var isGroupMaster: Bool = false
     @Published public var syncBrightnessOffset: Double = 0.0
 
+    @Published public var isEditingBrightness: Bool = false
+    @Published public var brightnessInputText: String = ""
     @Published public var isGPUDitheringEnabled: Bool = true
     @Published public var appearancePreset: DisplayAppearancePreset = .standard
     @Published public var isColorModeExpanded: Bool = false
-    @Published public var brightnessInputText: String = ""
 
     public init(
         id: CGDirectDisplayID,
