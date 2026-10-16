@@ -110,8 +110,9 @@ public struct DisplayAdvancedControlsDrawerView: View {
                 Picker("", selection: Binding(
                     get: { item.colorProfileName ?? "Default" },
                     set: { (name: String) in
-                        let match = store.colorProfiles.first { $0.name == name }
-                        if let prof = match {
+                        if name == "Default" {
+                            store.applyColorProfile(item, nil)
+                        } else if let prof = store.colorProfiles.first(where: { $0.name == name }) {
                             store.applyColorProfile(item, prof)
                         }
                     }

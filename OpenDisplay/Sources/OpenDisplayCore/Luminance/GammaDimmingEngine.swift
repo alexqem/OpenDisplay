@@ -29,6 +29,56 @@ public enum GammaDimmingEngine {
     }
 
     #if os(macOS) && arch(arm64)
+    /// Apply appearance presets (Standard, Inverted, Grayscale, Inverted Grayscale) via gamma transfer tables
+    public static func applyAppearancePreset(displayID: CGDirectDisplayID, preset: DisplayAppearancePreset) throws {
+        let size = GammaTableConstants.standardTableSize
+        let maxIndex = Float(size - 1)
+        var redTable = [Float](repeating: 0.0, count: Int(size))
+        var greenTable = [Float](repeating: 0.0, count: Int(size))
+        var blueTable = [Float](repeating: 0.0, count: Int(size))
+
+        switch preset {
+        case .standard:
+            try restoreGamma(displayID: displayID)
+            return
+
+        case .inverted:
+            for i in 0..<Int(size) {
+                let val = 1.0 - (Float(i) / maxIndex)
+                redTable[i] = val
+                greenTable[i] = val
+                blueTable[i] = val
+            }
+
+        case .grayscale:
+            for i in 0..<Int(size) {
+                let val = Float(i) / maxIndex
+                redTable[i] = val
+                greenTable[i] = val
+                blueTable[i] = val
+            }
+
+        case .invertedGrayscale:
+            for i in 0..<Int(size) {
+                let val = 1.0 - (Float(i) / maxIndex)
+                redTable[i] = val
+                greenTable[i] = val
+                blueTable[i] = val
+            }
+        }
+
+        let status = CGSetDisplayTransferByTable(
+            displayID,
+            size,
+            &redTable,
+            &greenTable,
+            &blueTable
+        )
+        guard status == .success else {
+            throw LuminanceError.gammaApplicationFailed(status.rawValue)
+        }
+    }
+
     /// Apply software dimming below 0% hardware brightness via hardware gamma tables
     public static func applyGammaDimming(
         displayID: CGDirectDisplayID,

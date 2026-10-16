@@ -9,6 +9,9 @@ public final class NightShiftTrueToneBridge: @unchecked Sendable {
     public static let shared = NightShiftTrueToneBridge()
 
     private init() {
+        // CoreBrightness is a private framework; explicitly dlopen it if not loaded
+        _ = dlopen("/System/Library/PrivateFrameworks/CoreBrightness.framework/CoreBrightness", RTLD_NOW)
+
         if let blueLightClass = DynamicObjCClass.resolve("CBBlueLightClient") {
             self.blueLightClient = (blueLightClass as AnyObject).perform(Selector(("new")))?.takeUnretainedValue()
         } else {
@@ -27,14 +30,23 @@ public final class NightShiftTrueToneBridge: @unchecked Sendable {
         guard let client = blueLightClient else {
             throw LuminanceError.coreBrightnessClientUnavailable
         }
-        let sel = Selector(("setEnabled:"))
-        guard (client as AnyObject).responds(to: sel) else {
-            throw LuminanceError.operationFailed(reason: "CBBlueLightClient does not respond to setEnabled:")
+
+        // On macOS Apple Silicon, toggling manual Night Shift requires both setEnabled: and setActive:
+        let setEnabledSel = Selector(("setEnabled:"))
+        if (client as AnyObject).responds(to: setEnabledSel) {
+            typealias SetEnabledFunc = @convention(c) (AnyObject, Selector, Bool) -> Bool
+            let imp = (client as AnyObject).method(for: setEnabledSel)
+            let fn = unsafeBitCast(imp, to: SetEnabledFunc.self)
+            _ = fn(client, setEnabledSel, enabled)
         }
-        typealias SetEnabledFunc = @convention(c) (AnyObject, Selector, Bool) -> Bool
-        let imp = (client as AnyObject).method(for: sel)
-        let fn = unsafeBitCast(imp, to: SetEnabledFunc.self)
-        _ = fn(client, sel, enabled)
+
+        let setActiveSel = Selector(("setActive:"))
+        if (client as AnyObject).responds(to: setActiveSel) {
+            typealias SetActiveFunc = @convention(c) (AnyObject, Selector, Bool) -> Bool
+            let imp = (client as AnyObject).method(for: setActiveSel)
+            let fn = unsafeBitCast(imp, to: SetActiveFunc.self)
+            _ = fn(client, setActiveSel, enabled)
+        }
     }
 
     /// Read active Night Shift enabled status
@@ -47,6 +59,7 @@ public final class NightShiftTrueToneBridge: @unchecked Sendable {
         let fn = unsafeBitCast(imp, to: GetStatusRawFunc.self)
         var buf = [UInt8](repeating: 0, count: 128)
         let ok = fn(client, sel, &buf)
+        // In CBBlueLightStatus struct: byte 0 is enabled, byte 1 is active
         return ok && buf.count > 1 && (buf[0] != 0 || buf[1] != 0)
     }
 

@@ -58,23 +58,41 @@ public enum RGBForcingEngine {
     }
 
     #if os(macOS) && arch(arm64)
-    private typealias IOAVServiceCreateFunc = @convention(c) (CFAllocator?, io_service_t) -> UnsafeMutableRawPointer?
-    private typealias IOAVServiceSetVirtualEDIDModeFunc = @convention(c) (UnsafeMutableRawPointer, CFData) -> kern_return_t
+    private typealias IOMFBOpenFunc = @convention(c) (io_service_t, mach_port_t, UInt32, UnsafeMutablePointer<UnsafeMutableRawPointer?>) -> kern_return_t
+    private typealias IOMFBSetColorRemapModeFunc = @convention(c) (UnsafeMutableRawPointer, UInt32) -> kern_return_t
 
-    /// Apply patched EDID on Apple Silicon on the fly without rebooting
-    public static func applyLiveVirtualEDID(service: io_service_t, patchedEDID: [UInt8]) -> Bool {
-        let library = DynamicLibrary()
-        guard let createFn = library.resolve("_IOAVServiceCreateWithService", as: IOAVServiceCreateFunc.self) ??
-                             library.resolve("IOAVServiceCreateWithService", as: IOAVServiceCreateFunc.self),
-              let setVirtualEDIDFn = library.resolve("_IOAVServiceSetVirtualEDIDMode", as: IOAVServiceSetVirtualEDIDModeFunc.self) ??
-                                     library.resolve("IOAVServiceSetVirtualEDIDMode", as: IOAVServiceSetVirtualEDIDModeFunc.self),
-              let avHandle = createFn(kCFAllocatorDefault, service) else {
+    /// Apply Appearance and Color Remap modes directly to the Apple Silicon Framebuffer (BetterDisplay parity)
+    /// mode 0 = Standard, 1 = Inverted, 2 = Grayscale, 4 = Inverted Grayscale
+    public static func setColorRemapMode(_ mode: UInt32) -> Bool {
+        let path = "/System/Library/PrivateFrameworks/IOMobileFramebuffer.framework/IOMobileFramebuffer"
+        guard let handle = dlopen(path, RTLD_NOW) else { return false }
+        defer { dlclose(handle) }
+
+        guard let openImp = dlsym(handle, "IOMobileFramebufferOpen"),
+              let setRemapImp = dlsym(handle, "IOMobileFramebufferSetColorRemapMode") else {
             return false
         }
 
-        let cfData = Data(patchedEDID) as CFData
-        let kr = setVirtualEDIDFn(avHandle, cfData)
-        return kr == KERN_SUCCESS
+        let openFn = unsafeBitCast(openImp, to: IOMFBOpenFunc.self)
+        let setRemapFn = unsafeBitCast(setRemapImp, to: IOMFBSetColorRemapModeFunc.self)
+
+        guard let matching = IOServiceMatching("IOMobileFramebufferShim") else { return false }
+        var iterator: io_iterator_t = 0
+        let kr = IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iterator)
+        guard kr == KERN_SUCCESS else { return false }
+        defer { IOObjectRelease(iterator) }
+
+        var success = false
+        while case let service = IOIteratorNext(iterator), service != 0 {
+            var fb: UnsafeMutableRawPointer?
+            if openFn(service, mach_task_self_, 0, &fb) == KERN_SUCCESS, let validFb = fb {
+                let status = setRemapFn(validFb, mode)
+                if status == KERN_SUCCESS {
+                    success = true
+                }
+            }
+        }
+        return success
     }
     #endif
 }

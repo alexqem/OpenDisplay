@@ -109,9 +109,14 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
         return VirtualDisplayManager.shared.allControllers().map { ($0.displayID, $0.config.name) }
     }
 
-    /// Force RGB color mode
-    public func forceRGB(service: io_service_t) -> Bool {
-        return RGBForcingEngine.applyLiveVirtualEDID(service: service, patchedEDID: [])
+    /// Set Color Appearance preset (Standard, Inverted, Grayscale, Inverted Grayscale)
+    public func setAppearancePreset(_ preset: DisplayAppearancePreset) -> Bool {
+        switch preset {
+        case .standard:          return RGBForcingEngine.setColorRemapMode(0)
+        case .inverted:          return RGBForcingEngine.setColorRemapMode(1)
+        case .grayscale:         return RGBForcingEngine.setColorRemapMode(2)
+        case .invertedGrayscale: return RGBForcingEngine.setColorRemapMode(4)
+        }
     }
 
     /// Set display mirror target
@@ -197,8 +202,11 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
         return ColorProfileController.shared.enumerateProfiles()
     }
 
-    /// Apply an ICC color profile by case-insensitive name substring
+    /// Apply an ICC color profile by case-insensitive name substring, or reset to default if name is "default"
     public func setColorProfile(named profileName: String, for displayID: CGDirectDisplayID) -> Bool {
+        if profileName.lowercased() == "default" || profileName.isEmpty {
+            return ColorProfileController.shared.setProfile(nil, for: displayID)
+        }
         let profiles = availableColorProfiles()
         guard let matched = profiles.first(where: { $0.name.localizedCaseInsensitiveContains(profileName) }) else {
             return false
@@ -348,8 +356,23 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
 
         case .forceRGB(let target):
             let tID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()
-            let ok = forceRGB(service: io_service_t(tID))
-            return (ok, ok ? "Applied Force RGB 4:4:4 mode to display \(tID)" : "Failed to force RGB 4:4:4")
+            let ok = setAppearancePreset(.standard)
+            return (ok, ok ? "Applied standard color mode to display \(tID)" : "Failed to set color mode")
+
+        case .setAppearance(let presetStr):
+            let preset: DisplayAppearancePreset
+            switch presetStr.lowercased() {
+            case "invert", "inverted":
+                preset = .inverted
+            case "gray", "grayscale", "monochrome":
+                preset = .grayscale
+            case "invert-gray", "inverted-grayscale", "invertedgrayscale":
+                preset = .invertedGrayscale
+            default:
+                preset = .standard
+            }
+            let ok = setAppearancePreset(preset)
+            return (ok, ok ? "Applied appearance preset '\(preset.rawValue)'" : "Failed to apply appearance preset")
 
         case .setHDR(let target, let enabled):
             let tID = UInt32(target).map { CGDirectDisplayID($0) } ?? CGMainDisplayID()

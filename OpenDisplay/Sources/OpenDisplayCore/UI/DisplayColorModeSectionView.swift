@@ -62,8 +62,7 @@ public struct DisplayColorModeSectionView: View {
         VStack(alignment: .leading, spacing: 5) {
             // Option 1: 8-bit SDR RGB Full Range (Standard RGB output)
             Button {
-                item.isForceRGBActive = true
-                store.activeTooltipText = "Active: 8-bit SDR RGB Full Range"
+                store.setForceRGB(item, enabled: true)
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: item.isForceRGBActive ? "circle.fill" : "circle")
@@ -88,8 +87,7 @@ public struct DisplayColorModeSectionView: View {
 
             // Option 2: 8-bit SDR YCbCr 4:4:4 Limited Range
             Button {
-                item.isForceRGBActive = false
-                store.activeTooltipText = "Active: 8-bit SDR YCbCr 4:4:4 Limited Range"
+                store.setForceRGB(item, enabled: false)
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: !item.isForceRGBActive ? "circle.fill" : "circle")
@@ -192,7 +190,7 @@ public struct DisplayColorModeSectionView: View {
             ForEach(DisplayAppearancePreset.allCases) { preset in
                 Button(action: {
                     item.appearancePreset = preset
-                    store.activeTooltipText = "Applied: \(preset.rawValue)"
+                    store.setAppearancePreset(item, preset: preset)
                 }) {
                     HStack(spacing: 6) {
                         Image(systemName: preset.icon)

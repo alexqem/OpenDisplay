@@ -23,7 +23,7 @@ public struct DisplayResolutionModePickerView: View {
                     Text("Probing modes...").tag("" as String?)
                 } else {
                     if !item.recommendedResolutions.isEmpty {
-                        Section(header: Text("Recommended")) {
+                        Section(header: Text("Modes matching default filter:")) {
                             ForEach(item.recommendedResolutions) { mode in
                                 Text(mode.userLabel).tag(mode.id as String?)
                             }

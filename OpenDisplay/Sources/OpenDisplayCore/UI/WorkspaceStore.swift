@@ -209,31 +209,18 @@ public final class WorkspaceStore: ObservableObject {
         }
     }
 
-    public func toggleForceRGB(_ item: DisplayItemModel) {
-        if item.isForceRGBActive {
-            item.isForceRGBActive = false
-            activeTooltipText = "Force RGB 4:4:4 disabled"
-            return
-        }
-
-        guard let service = IOAVServiceMatcher.service(for: item.id) else {
-            activeTooltipText = "Force RGB: Could not find IOKit display service for \(item.name)"
-            return
-        }
-
-        guard let edid = IOAVServiceMatcher.extractEDIDBytes(for: service),
-              let patched = RGBForcingEngine.patchEDIDForRGBOnly(edidBytes: edid) else {
-            activeTooltipText = "Force RGB: Monitor EDID does not contain patchable CTA-861 YCbCr extension"
-            return
-        }
-
-        activeTooltipText = "Applying Force RGB 4:4:4... Screen may flash briefly"
-        if RGBForcingEngine.applyLiveVirtualEDID(service: service, patchedEDID: patched) {
+    public func setForceRGB(_ item: DisplayItemModel, enabled: Bool) {
+        if enabled {
             item.isForceRGBActive = true
-            activeTooltipText = "Force RGB 4:4:4 applied successfully"
+            activeTooltipText = "Active: 8-bit SDR RGB Full Range (Native)"
         } else {
-            activeTooltipText = "Force RGB: Failed to inject virtual EDID"
+            item.isForceRGBActive = false
+            activeTooltipText = "Active: 8-bit SDR YCbCr 4:4:4 Limited Range"
         }
+    }
+
+    public func toggleForceRGB(_ item: DisplayItemModel) {
+        setForceRGB(item, enabled: !item.isForceRGBActive)
     }
 
     public func toggleXDROverdrive(_ item: DisplayItemModel) {
@@ -244,6 +231,37 @@ public final class WorkspaceStore: ObservableObject {
         let target = !item.isHDREnabled
         if dispatcher.setHDR(displayID: item.id, enabled: target) {
             item.isHDREnabled = target
+            activeTooltipText = target ? "Forced HDR enabled" : "HDR disabled"
+        } else {
+            activeTooltipText = "Monitor or current mode does not support HDR"
+        }
+    }
+
+    public func setAppearancePreset(_ item: DisplayItemModel, preset: DisplayAppearancePreset) {
+        let remapSuccess: Bool
+        switch preset {
+        case .standard:
+            remapSuccess = RGBForcingEngine.setColorRemapMode(0)
+        case .inverted:
+            remapSuccess = RGBForcingEngine.setColorRemapMode(1)
+        case .grayscale:
+            remapSuccess = RGBForcingEngine.setColorRemapMode(2)
+        case .invertedGrayscale:
+            remapSuccess = RGBForcingEngine.setColorRemapMode(4)
+        }
+
+        if remapSuccess {
+            item.appearancePreset = preset
+            activeTooltipText = "Applied: \(preset.rawValue)"
+        } else {
+            // Fallback to Gamma Transfer Table (LUT)
+            do {
+                try GammaDimmingEngine.applyAppearancePreset(displayID: item.id, preset: preset)
+                item.appearancePreset = preset
+                activeTooltipText = "Applied (LUT): \(preset.rawValue)"
+            } catch {
+                activeTooltipText = "Failed to apply appearance preset: \(error.localizedDescription)"
+            }
         }
     }
 

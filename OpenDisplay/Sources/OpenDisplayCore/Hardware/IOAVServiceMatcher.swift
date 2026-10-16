@@ -71,8 +71,16 @@ public enum IOAVServiceMatcher {
         })?.service
     }
 
-    /// Walk parent chain up to 8 levels to extract DisplayVendorID and DisplayProductID
+    /// Walk parent chain or read EDID via IOAVService to extract DisplayVendorID and DisplayProductID
     public static func extractVendorAndProduct(for service: io_service_t) -> (vendorID: UInt32?, productID: UInt32?) {
+        // Method 1: Check EDID directly via IOAVServiceCopyEDID
+        if let edid = extractEDIDBytes(for: service), edid.count >= 18 {
+            let vendor = (UInt32(edid[8]) << 8) | UInt32(edid[9])
+            let product = UInt32(edid[10]) | (UInt32(edid[11]) << 8)
+            return (vendor, product)
+        }
+
+        // Method 2: Fallback to parent chain IOKit registry properties
         var current = service
         IOObjectRetain(current)
         defer { IOObjectRelease(current) }

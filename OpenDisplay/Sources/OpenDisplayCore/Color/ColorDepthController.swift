@@ -7,7 +7,7 @@ public final class ColorDepthController: @unchecked Sendable {
     private typealias CGSConfigureDisplayModeFunc = @convention(c) (CGDisplayConfigRef, CGDirectDisplayID, Int32) -> CGError
     private typealias SLSDisplaySupportsHDRModeFunc = @convention(c) (CGDirectDisplayID) -> Bool
     private typealias SLSDisplayIsHDRModeEnabledFunc = @convention(c) (CGDirectDisplayID) -> Bool
-    private typealias SLSDisplaySetHDRModeEnabledFunc = @convention(c) (CGDirectDisplayID, Bool) -> CGError
+    private typealias SLSDisplaySetHDRModeEnabledFunc = @convention(c) (CGDirectDisplayID, Bool, Int32, Int32) -> Int32
 
     private let skyLightLib: DynamicLibrary?
     private let configureDisplayModeFn: CGSConfigureDisplayModeFunc?
@@ -38,10 +38,11 @@ public final class ColorDepthController: @unchecked Sendable {
         return isHDREnabledFn?(displayID) ?? false
     }
 
-    /// Toggle HDR mode
+    /// Toggle HDR mode (4 arguments on modern Apple Silicon macOS)
     public func setHDREnabled(displayID: CGDirectDisplayID, enabled: Bool) -> Bool {
         guard let setHDR = setHDREnabledFn else { return false }
-        return setHDR(displayID, enabled) == .success
+        let status = setHDR(displayID, enabled, 0, 0)
+        return status == 0
     }
 
     /// Inspect active display mode for 10-bit Deep Color encoding

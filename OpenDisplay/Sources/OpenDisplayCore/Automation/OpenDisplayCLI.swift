@@ -12,6 +12,7 @@ public enum CLICommand: Equatable, Sendable {
     case reconnect(target: String)
     case listPresets
     case forceRGB(target: String)
+    case setAppearance(preset: String)
     case setHDR(target: String, enabled: Bool)
     case setProfile(target: String, profileName: String)
     case setInputSource(target: String, source: String)
@@ -150,6 +151,10 @@ public enum OpenDisplayCLI {
 
         case "profiles", "list-profiles":
             return .listProfiles
+
+        case "appearance", "set-appearance":
+            let preset = parseFlag(AutomationConstants.flagPreset, arguments: tail, defaultValue: "standard")
+            return .setAppearance(preset: preset)
 
         case "link-group", "group-link":
             let master = parseFlag(AutomationConstants.flagMaster, arguments: tail)
