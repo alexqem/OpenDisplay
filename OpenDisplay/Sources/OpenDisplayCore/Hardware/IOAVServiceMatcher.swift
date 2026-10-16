@@ -93,8 +93,26 @@ public enum IOAVServiceMatcher {
         return (nil, nil)
     }
 
-    /// Extract raw EDID bytes from IOKit registry property "IODisplayEDID" or "EDID"
+    private typealias IOAVServiceCreateFunc = @convention(c) (CFAllocator?, io_service_t) -> UnsafeMutableRawPointer?
+    private typealias IOAVServiceCopyEDIDFunc = @convention(c) (UnsafeMutableRawPointer, UnsafeMutablePointer<CFData?>) -> kern_return_t
+
+    /// Extract raw EDID bytes from IOAVService or IOKit registry property "IODisplayEDID"
     public static func extractEDIDBytes(for service: io_service_t) -> [UInt8]? {
+        // First attempt: read EDID directly from IOAVServiceCopyEDID (works on Apple Silicon DCPAVServiceProxy)
+        let library = DynamicLibrary()
+        if let createFn = library.resolve("_IOAVServiceCreateWithService", as: IOAVServiceCreateFunc.self) ??
+                          library.resolve("IOAVServiceCreateWithService", as: IOAVServiceCreateFunc.self),
+           let copyEDIDFn = library.resolve("_IOAVServiceCopyEDID", as: IOAVServiceCopyEDIDFunc.self) ??
+                            library.resolve("IOAVServiceCopyEDID", as: IOAVServiceCopyEDIDFunc.self),
+           let avHandle = createFn(kCFAllocatorDefault, service) {
+            var edidData: CFData?
+            let kr = copyEDIDFn(avHandle, &edidData)
+            if kr == KERN_SUCCESS, let data = edidData as Data?, data.count >= 128 {
+                return [UInt8](data)
+            }
+        }
+
+        // Fallback: registry parent walk
         var current = service
         IOObjectRetain(current)
         defer { IOObjectRelease(current) }

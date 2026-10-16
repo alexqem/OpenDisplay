@@ -20,7 +20,7 @@ public struct DisplayResolutionModePickerView: View {
 
             Picker("", selection: resolutionBinding) {
                 if item.availableResolutions.isEmpty {
-                    Text("Default").tag("" as String?)
+                    Text("Probing modes...").tag("" as String?)
                 } else {
                     if !item.recommendedResolutions.isEmpty {
                         Section(header: Text("Recommended")) {

@@ -71,7 +71,24 @@ public enum XDROverdriveConstants {
     public static let defaultHeadroomMultiplier: Float = 1.0
 }
 
-/// Constants for ColorSync and ICC Profile Management
+/// Visual appearance and color filter modes (BetterDisplay System Colors)
+public enum DisplayAppearancePreset: String, CaseIterable, Identifiable, Sendable {
+    case standard          = "Standard Appearance"
+    case inverted          = "Inverted Appearance"
+    case grayscale         = "Grayscale Appearance"
+    case invertedGrayscale = "Inverted Grayscale Appearance"
+
+    public var id: String { rawValue }
+
+    public var icon: String {
+        switch self {
+        case .standard:          return "camera.aperture"
+        case .inverted:          return "circle.lefthalf.filled"
+        case .grayscale:         return "circle"
+        case .invertedGrayscale: return "circle.fill"
+        }
+    }
+}
 public enum ColorProfileConstants {
     public static let iccExtension: String = "icc"
     public static let icmExtension: String = "icm"

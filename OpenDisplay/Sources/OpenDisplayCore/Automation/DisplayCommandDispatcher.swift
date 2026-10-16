@@ -75,13 +75,14 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
         return SkyLightModeEngine.shared.availableModes(for: displayID)
     }
 
-    /// Switch resolution on a display
-    public func setResolution(displayID: CGDirectDisplayID, width: Int, height: Int, isHiDPI: Bool) -> Bool {
+    /// Switch resolution on a display with mode number fallback
+    public func setResolution(displayID: CGDirectDisplayID, width: Int, height: Int, isHiDPI: Bool, modeNumber: Int32? = nil) -> Bool {
         return SkyLightModeEngine.shared.setDisplayResolution(
             displayID: displayID,
             pointWidth: width,
             pointHeight: height,
-            isHiDPI: isHiDPI
+            isHiDPI: isHiDPI,
+            modeNumber: modeNumber
         )
     }
 

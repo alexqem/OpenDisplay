@@ -1,75 +1,81 @@
-# OpenDisplay Product Strategy & Strategic Roadmap
+# OpenDisplay Engineering Roadmap: Detailed Color Mode Architecture
 
-> **Mission:** Deliver a 100% free, DRM-free, open-source Apple Silicon (M1-M4) display manager that exceeds BetterDisplay through native macOS Liquid Glass aesthetics, zero telemetry, sub-millisecond responsiveness, and progressive disclosure.
-
----
-
-## 0. BetterDisplay Reverse-Engineering & REA Artifact Baseline
-
-Полный каталог функций и иерархия меню BetterDisplay исследованы и задокументированы с помощью **REA (Reverse-Engineer-Anything) MCP**:
-- 🌐 **Интерактивная карта интерфейса (HTML):** [`betterdisplay_structure/index.html`](betterdisplay_structure/index.html) — пошаговое описание выпадающего меню из статус-бара (Built-in Display, Studio Display XDR, Virtual 16:9, Tools), всех 13 подменю и 7 вкладок окна настроек (`SettingsView`).
-- 📋 **Технический отчет и план низкоуровневой декомпиляции:** [`betterdisplay_structure/plan.md`](betterdisplay_structure/plan.md) — карта динамических символов (`IOKit`, `SkyLight`, `ScreenCaptureKit`, `ColorSync`, `CoreImage`), выделение arm64 среза и стратегия чистого (clean-room) воспроизведения.
+> **Context:** Reverse-engineered from BetterDisplay v5.1.1 (`Color Mode` submenu analysis) and user testing on multi-display setups (HDMI 27E1Q external monitors + built-in Liquid Retina XDR).
+> **Reference Artifacts:**
+> - Interactive Anatomy: [`betterdisplay_structure/index.html`](betterdisplay_structure/index.html)
+> - Technical Decompilation & Symbols Plan: [`betterdisplay_structure/plan.md`](betterdisplay_structure/plan.md)
 
 ---
 
-## 1. High-Impact Product Proposals & Additional Features (Из BetterDisplay REA)
+## 1. Diagnostics & Immediate Bug Fixes (Hotfixes)
 
-### 1.1 Complete 13 Submenus Architecture (Архитектура 13 подменю дисплея)
-* **Проблема:** В текущем OpenDisplay расширенные настройки сгруппированы в единый drawer, тогда как пользователю требуется модульное раскрытие конкретных категорий (как в BetterDisplay):
-  1. `Display Mode`: HiDPI (Scaled), LowDPI (Native), Favorites 1–5.
-  2. `Refresh Rate`: 60Hz, 120Hz (ProMotion / VRR), 50Hz, кинематографические частоты.
-  3. `Color Mode`: SDR/HDR, Force RGB 4:4:4, YCbCr 4:2:2, YCbCr 4:2:0, 8/10/12 bpc.
-  4. `Mirror Display`: зеркалирование с адаптацией пропорций.
-  5. `Stream Display`: полноэкранная трансляция видеопотока через ScreenCaptureKit.
-  6. `Picture in Picture`: плавающий оверлей экрана или отдельного окна.
-  7. `Move Display`: пространственное перемещение монитора в раскладке macOS.
-  8. `Screen Rotation`: 0°, 90°, 180°, 270° через `SLSSetDisplayRotation`.
-  9. `Image Adjustments`: программная гамма, насыщенность, баланс белого (Metal/LUT).
-  10. `Color Profile`: системные ICC-профили ColorSync.
-  11. `Apple Display Preset`: пресеты Apple XDR (P3-1600 nits, P3-500 nits и др.).
-  12. `Configuration Protection`: фиксация раскладки, разрешения и частоты от сброса при сне.
-  13. `Manage Display`: дампы DPCD, калибровка nits, инъекция кастомных EDID.
+### 1.1 Resolution Selector Empty / No Feedback on Change
+- **Root Cause:** When an external display connects via HDMI, `CGDisplayCopyAllDisplayModes` may return modes before SkyLight finishes handshake, or the mode matcher in `SkyLightModeEngine.setDisplayResolution` fails because point dimensions don't match exactly without scaling flags.
+- **Fix:**
+  1. Fallback mode resolution: if `modes` are empty, probe with `CGSGetCurrentDisplayMode` and populate with current native pixel dimensions.
+  2. Implement direct mode switching via `SLSSetDisplayModeDescription` / `CGSConfigureDisplayMode(config, displayID, modeNumber)` using the explicit `mode.modeNumber`.
+  3. **User Feedback:** Display transient HUD / status line message (`WorkspaceStore.shared.activeTooltipText = "Resolution switched to \(mode.userLabel)"` or error notification).
 
-### 1.2 Display Notch Switch & Optimization
-* **Проблема:** На ноутбуках с вырезом (MacBook Pro 14"/16", MacBook Air) рабочий стол либо перекрывается вырезом, либо не использует полезное пространство.
-* **Предложение:** Внедрить тумблер `Display Notch`, переключающий между масштабированием рабочего стола под вырезом и черной полосой через альтернативные дескрипторы дисплея (`_notchAlternativeDisplayModeNumber` в SkyLight).
+### 1.2 "Force RGB" Switch Does Not Work & Fails Silently
+- **Root Cause:** `WorkspaceStore.toggleForceRGB` casts `io_service_t(item.id)` directly, which is an invalid IOKit service handle. Real handles must be resolved via `IOAVServiceMatcher.service(for: item.id)`.
+- **Fix:**
+  1. In `WorkspaceStore.toggleForceRGB`, resolve `IOAVServiceMatcher.service(for: item.id)`.
+  2. Read current display EDID, patch CTA-861 flags using `RGBForcingEngine.patchEDIDForRGBOnly(edidBytes:)`, and apply live via `RGBForcingEngine.applyLiveVirtualEDID`.
+  3. **User Feedback:** Immediate status line message: `"Forcing RGB 4:4:4... Screen may flash briefly"` + OSD indicator.
 
-### 1.3 Virtual Screens Manager (Dummy Displays)
-* **Проблема:** Нет возможности создать кастомные разрешения для записи экрана, трансляции по сети или Sidecar без физического монитора.
-* **Предложение:** Реализовать модуль виртуальных дисплеев (16:9, 16:10, 21:9 UltraWide, iPad) через приватный драйвер `CGVirtualDisplay` / SkyLight с возможностью привязки в зеркало к физическому дисплею.
-
-### 1.4 System Colors & Accessibility Filters (Tools Menu)
-* **Проблема:** Системные настройки доступности macOS глобальны и неудобны для быстрого переключения.
-* **Предложение:** Добавить в меню `Tools` секцию `System Colors`: инверсия цветов, монохром (оттенки серого), постеризация и кастомный оттеночный тинт (Night tint) на уровне WindowServer/CoreImage.
+### 1.3 ColorSync Profile Switch Crash
+- **Root Cause:** `ColorSyncDeviceSetCustomProfiles` crashes when invoked with unverified CoreGraphics Display UUIDs or when `kColorSyncDisplayDeviceClass` / `kColorSyncDeviceDefaultProfileID` are uninitialized or nil in the runtime bridge.
+- **Fix:**
+  1. Add safety guards in `ColorProfileController.setProfile`: verify UUID existence, catch exceptions, check file URL accessibility.
+  2. Provide fallback to system default profile without crashing.
+  3. **User Feedback:** Update status line to `"Color Profile applied: \(profile.name)"`.
 
 ---
 
-## 2. Prioritized Implementation Roadmap
+## 2. Detailed "Color Mode" Submenu Specification (BetterDisplay Parity)
 
-| Priority | Feature Domain | Key Technologies | Expected User Value | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| **Phase 1** | **DDC Input Source Switching** | VCP `0x60`, IOAVService I2C | Instant DP/HDMI/USB-C input switching | **Completed (v1.1)** |
-| **Phase 2** | **HiDPI Resolution Switcher** | SkyLight, CoreGraphics, GCD Math | Smart resolution picker with `★ RECOMMENDED` badges | **Completed (v1.2)** |
-| **Phase 3** | **Liquid Glass UI Redesign** | SwiftUI, `.ultraThinMaterial`, AtlasTheme | Native macOS glassmorphism, dynamic hover status line | **Completed (v1.3)** |
-| **Phase 4** | **Master-Slave Display Groups** | WorkspaceStore, Curve Offsets | Single slider/hotkey controls all screens simultaneously | **Completed (v1.4)** |
-| **Phase 5** | **Window & App-Targeted PiP** | ScreenCaptureKit (`SCWindow`), AppKit Panel | Picture-in-Picture for specific apps with click-through | **Next Up** |
-| **Phase 6** | **Display Notch Toggle & Mode Engine** | SkyLight Display Descriptors | Обход или скрытие выреза на MacBook Liquid Retina | Planned |
-| **Phase 7** | **13 Modular Submenus** | PopoverSections, Progressive Disclosure | Иерархическое раскрытие настроек (Color, Presets, Move) | Planned |
-| **Phase 8** | **Virtual Screens (Dummy 16:9 / 21:9)**| CGVirtualDisplay, SkyLight Virtualization | Создание фиктивных экранов для стриминга и HiDPI | Planned |
-| **Phase 9** | **System Colors (Tools Menu)** | CoreImage CIFilter, WindowServer | Быстрый монохром, инверсия, ночной тинт экрана | Planned |
-| **Phase 10**| **Layout & Config Protection on Wake** | CGWindowList, Accessibility API | Защита от сброса позиций окон и настроек герцовки | Planned |
+Based on the inspected BetterDisplay submenu, we implement a dedicated modular section in `DisplayAdvancedControlsDrawerView` / `DisplayCardView`:
+
+### 2.1 Submenu Header: Color Mode
+- Swatch/palette icon + `Color Mode` label + chevron expansion toggle.
+
+### 2.2 Color Depth & Encoding Options (Selectable Options)
+1. **Option 1: 8-bit (SDR, RGB, Full Range)**
+   - Icon: Circular sun/brightness glyph.
+   - Badges: `[SDR - Green]`, `[RGB - Green]`, `[Full Range - Green]`.
+2. **Option 2: 8-bit (SDR, YCbCr 4:4:4, Limited Range)** (or active mode)
+   - Badges: `[SDR - Green]`, `[YCbCr - Amber]`, `[4:4:4 - Green]`, `[Limited Range - Red]`.
+3. **Option 3: 10-bit Deep Color (ARGB2101010)** (if hardware supports)
+   - Badges: `[HDR/SDR]`, `[10-Bit]`, `[Full Range]`.
+- **Informational Note:** Half-shield icon + `"Configuration Protection can make color mode changes persistent."`
+
+### 2.3 HDR Settings Section
+- Layered-squares icon + `Pro` badge + `Allow Forced HDR` switch (enabled for HDR monitors, disabled with explanation if monitor is SDR-only).
+
+### 2.4 GPU Dithering Section
+- Waveform/signal bars icon + `GPU Dithering` toggle switch.
+- **Warning / Explanation Note:**
+  - Triangle warning icon + `"Connection color depth (8-bit) is lower than the framebuffer depth (10-bit). The GPU may use temporal dithering to improve colors."`
+
+### 2.5 Appearance & Color Filter Presets (System Colors)
+- Quick one-click visual mode buttons:
+  - 🔘 **Standard Appearance** (aperture icon).
+  - 🌗 **Inverted Appearance** (contrasting aperture icon).
+  - ⚪ **Grayscale Appearance** (empty circle icon).
+  - ⚫ **Inverted Grayscale Appearance** (solid circle icon).
 
 ---
 
-## 3. Engineering & Quality Protocol
+## 3. Implementation Steps & Verification Protocol
 
-Каждый инкремент строго следует принципам:
-1. **KISS (Keep It Simple, Stupid):** Плоские, прозрачные структуры данных без лишних уровней абстракций и промежуточных middleware.
-2. **DRY (Don't Repeat Yourself):** Все команды (UI, CLI, хоткеи) исполняются строго через единый источник правды — `DisplayCommandDispatcher.shared`.
-3. **SRP (Single Responsibility Principle):** Четкое разделение чистой бизнес-логики (математика кривых, парсинг EDID, парсинг аргументов) от низкоуровневых аппаратных вызовов (`IOAVService`, `SkyLight`). Чистая логика покрывается офлайн-тестами.
-4. **Bundle-First Architecture:** Модули и UI упаковываются в целевой бандл приложения `/Applications/OpenDisplay.app` без разрозненных внешних зависимостей.
-5. **Zero Magic Numbers:** Все опкоды, тайминги, размеры шрифтов и отступы вынесены в `Constants/` и `AtlasTheme.swift`.
-6. **Automated Verification:**
-   - SwiftLint проверка статического качества кода (`swiftlint lint`).
-   - Модульные тесты Swift Package Manager (`swift test` в срезе Core).
-   - Независимое архитектурное ревью через `opencode run -m zai-coding-plan/glm-5.3-flash`.
+1. **Step 1: Fix Core Bugs (Crash & Silent Failures)**
+   - Fix `ColorProfileController` crash with safe unwraps & exception handling.
+   - Fix `toggleForceRGB` to resolve real `io_service_t` via `IOAVServiceMatcher`.
+   - Fix `setResolution` with mode number fallbacks and instant user feedback.
+2. **Step 2: Implement Color Mode & GPU Dithering UI Component**
+   - Create `DisplayColorModeSectionView.swift` implementing the 5 sections above.
+3. **Step 3: Verification & Review**
+   - Run unit tests: `swift test` (Phases 1-21).
+   - Run SwiftLint: `DYLD_FRAMEWORK_PATH=/Library/Developer/CommandLineTools/usr/lib swiftlint lint Sources Tests --config .swiftlint.yml`.
+   - Perform independent architectural review via `opencode run -m zai-coding-plan/glm-5.3-flash`.
+   - Commit cleanly to Git and push.

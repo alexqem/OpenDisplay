@@ -35,6 +35,8 @@ public struct DisplayAdvancedControlsDrawerView: View {
 
             if item.isAdvancedDrawerExpanded {
                 VStack(alignment: .leading, spacing: 10) {
+                    DisplayColorModeSectionView(item: item)
+
                     colorPillsAndProfileRow
 
                     // External display hardware controls: rotation, input source & power

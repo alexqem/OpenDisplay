@@ -64,8 +64,10 @@ public enum RGBForcingEngine {
     /// Apply patched EDID on Apple Silicon on the fly without rebooting
     public static func applyLiveVirtualEDID(service: io_service_t, patchedEDID: [UInt8]) -> Bool {
         let library = DynamicLibrary()
-        guard let createFn = library.resolve("_IOAVServiceCreateWithService", as: IOAVServiceCreateFunc.self),
-              let setVirtualEDIDFn = library.resolve("_IOAVServiceSetVirtualEDIDMode", as: IOAVServiceSetVirtualEDIDModeFunc.self),
+        guard let createFn = library.resolve("_IOAVServiceCreateWithService", as: IOAVServiceCreateFunc.self) ??
+                             library.resolve("IOAVServiceCreateWithService", as: IOAVServiceCreateFunc.self),
+              let setVirtualEDIDFn = library.resolve("_IOAVServiceSetVirtualEDIDMode", as: IOAVServiceSetVirtualEDIDModeFunc.self) ??
+                                     library.resolve("IOAVServiceSetVirtualEDIDMode", as: IOAVServiceSetVirtualEDIDModeFunc.self),
               let avHandle = createFn(kCFAllocatorDefault, service) else {
             return false
         }

@@ -151,8 +151,15 @@ public final class SkyLightModeEngine: @unchecked Sendable {
         return descriptors
     }
 
-    /// Set display resolution directly using a CGDisplayMode match
-    public func setDisplayResolution(displayID: CGDirectDisplayID, pointWidth: Int, pointHeight: Int, isHiDPI: Bool) -> Bool {
+    /// Set display resolution directly using a CGDisplayMode match or fallback mode number
+    public func setDisplayResolution(displayID: CGDirectDisplayID, pointWidth: Int, pointHeight: Int, isHiDPI: Bool, modeNumber: Int32? = nil) -> Bool {
+        // If an explicit mode number was supplied, try setting it via CGSConfigureDisplayMode first
+        if let modeNumber = modeNumber, modeNumber >= 0 {
+            if setDisplayMode(displayID: displayID, modeNumber: modeNumber) {
+                return true
+            }
+        }
+
         guard let modeList = CGDisplayCopyAllDisplayModes(displayID, nil) as? [CGDisplayMode] else {
             return false
         }

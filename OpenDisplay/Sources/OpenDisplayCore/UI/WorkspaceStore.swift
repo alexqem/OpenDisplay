@@ -211,10 +211,27 @@ public final class WorkspaceStore: ObservableObject {
     public func toggleForceRGB(_ item: DisplayItemModel) {
         if item.isForceRGBActive {
             item.isForceRGBActive = false
+            activeTooltipText = "Force RGB 4:4:4 disabled"
             return
         }
-        if dispatcher.forceRGB(service: io_service_t(item.id)) {
+
+        guard let service = IOAVServiceMatcher.service(for: item.id) else {
+            activeTooltipText = "Force RGB: Could not find IOKit display service for \(item.name)"
+            return
+        }
+
+        guard let edid = IOAVServiceMatcher.extractEDIDBytes(for: service),
+              let patched = RGBForcingEngine.patchEDIDForRGBOnly(edidBytes: edid) else {
+            activeTooltipText = "Force RGB: Monitor EDID does not contain patchable CTA-861 YCbCr extension"
+            return
+        }
+
+        activeTooltipText = "Applying Force RGB 4:4:4... Screen may flash briefly"
+        if RGBForcingEngine.applyLiveVirtualEDID(service: service, patchedEDID: patched) {
             item.isForceRGBActive = true
+            activeTooltipText = "Force RGB 4:4:4 applied successfully"
+        } else {
+            activeTooltipText = "Force RGB: Failed to inject virtual EDID"
         }
     }
 
@@ -256,11 +273,17 @@ public final class WorkspaceStore: ObservableObject {
 
     public func applyColorProfile(_ item: DisplayItemModel, _ profile: ICCProfileInfo?) {
         guard let profile else {
-            item.colorProfileName = nil
+            if ColorProfileController.shared.setProfile(nil, for: item.id) {
+                item.colorProfileName = nil
+                activeTooltipText = "Restored default ColorSync profile"
+            }
             return
         }
         if ColorProfileController.shared.setProfile(profile, for: item.id) {
             item.colorProfileName = profile.name
+            activeTooltipText = "Color profile applied: \(profile.name)"
+        } else {
+            activeTooltipText = "Failed to apply color profile: \(profile.name)"
         }
     }
 
@@ -271,9 +294,19 @@ public final class WorkspaceStore: ObservableObject {
     }
 
     public func setResolution(_ item: DisplayItemModel, mode: DisplayResolutionDescriptor) {
-        if dispatcher.setResolution(displayID: item.id, width: mode.pointWidth, height: mode.pointHeight, isHiDPI: mode.isHiDPI) {
+        activeTooltipText = "Switching resolution to \(mode.userLabel)..."
+        if dispatcher.setResolution(
+            displayID: item.id,
+            width: mode.pointWidth,
+            height: mode.pointHeight,
+            isHiDPI: mode.isHiDPI,
+            modeNumber: mode.modeNumber
+        ) {
             item.selectedResolutionId = mode.id
+            activeTooltipText = "Resolution changed to \(mode.userLabel)"
             refresh()
+        } else {
+            activeTooltipText = "Failed to switch resolution to \(mode.userLabel)"
         }
     }
 }

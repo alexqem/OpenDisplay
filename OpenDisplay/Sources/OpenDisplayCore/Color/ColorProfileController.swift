@@ -100,7 +100,7 @@ public final class ColorProfileController: @unchecked Sendable {
     }
 
     /// Apply ICC profile to target display using ColorSync
-    public func setProfile(_ profile: ICCProfileInfo, for displayID: CGDirectDisplayID) -> Bool {
+    public func setProfile(_ profile: ICCProfileInfo?, for displayID: CGDirectDisplayID) -> Bool {
         guard let rawUUID = CGDisplayCreateUUIDFromDisplayID(displayID) else { return false }
         let uuid = rawUUID.takeRetainedValue()
 
@@ -109,8 +109,16 @@ public final class ColorProfileController: @unchecked Sendable {
             return false
         }
 
-        let profileDict: NSDictionary = [profileIDKey: profile.path as NSURL]
-        return ColorSyncDeviceSetCustomProfiles(deviceClass, uuid, profileDict as CFDictionary)
+        if let profile = profile {
+            // Check if profile file exists
+            guard FileManager.default.fileExists(atPath: profile.path.path) else { return false }
+            let profileDict: NSDictionary = [profileIDKey: profile.path as NSURL]
+            return ColorSyncDeviceSetCustomProfiles(deviceClass, uuid, profileDict as CFDictionary)
+        } else {
+            // Restore factory/default profile
+            let resetDict: NSDictionary = [profileIDKey: kCFNull as Any]
+            return ColorSyncDeviceSetCustomProfiles(deviceClass, uuid, resetDict as CFDictionary)
+        }
     }
 }
 #endif
