@@ -61,17 +61,17 @@ public struct DisplayColorModeSectionView: View {
     private var colorDepthRows: some View {
         VStack(alignment: .leading, spacing: 5) {
             // Option 1: 8-bit SDR RGB Full Range (Default standard RGB mode)
-            Button(action: {
+            Button {
                 if !item.isForceRGBActive {
                     store.toggleForceRGB(item)
                 } else {
                     store.activeTooltipText = "Active: 8-bit SDR RGB Full Range"
                 }
-            }) {
+            } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: item.isForceRGBActive || item.capabilities.supportsForceRGB ? "circle.fill" : "circle")
+                    Image(systemName: item.isForceRGBActive ? "circle.fill" : "circle")
                         .font(.system(size: 10))
-                        .foregroundStyle(item.isForceRGBActive || item.capabilities.supportsForceRGB ? Color.accentColor : Color.secondary)
+                        .foregroundStyle(item.isForceRGBActive ? Color.accentColor : Color.secondary)
 
                     Text("8-bit")
                         .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
@@ -84,23 +84,23 @@ public struct DisplayColorModeSectionView: View {
                     AtlasBadge("Full Range", style: .success)
                 }
                 .padding(6)
-                .background(item.isForceRGBActive || item.capabilities.supportsForceRGB ? Color.accentColor.opacity(0.12) : Color.clear)
+                .background(item.isForceRGBActive ? Color.accentColor.opacity(0.12) : Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
             }
             .buttonStyle(.plain)
 
             // Option 2: 8-bit SDR YCbCr 4:4:4 Limited Range
-            Button(action: {
+            Button {
                 if item.isForceRGBActive {
                     store.toggleForceRGB(item)
                 } else {
                     store.activeTooltipText = "Active: 8-bit SDR YCbCr 4:4:4 Limited Range"
                 }
-            }) {
+            } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: !item.isForceRGBActive && !item.capabilities.supportsForceRGB ? "circle.fill" : "circle")
+                    Image(systemName: !item.isForceRGBActive ? "circle.fill" : "circle")
                         .font(.system(size: 10))
-                        .foregroundStyle(!item.isForceRGBActive && !item.capabilities.supportsForceRGB ? Color.accentColor : Color.secondary)
+                        .foregroundStyle(!item.isForceRGBActive ? Color.accentColor : Color.secondary)
 
                     Text("8-bit")
                         .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
@@ -114,7 +114,7 @@ public struct DisplayColorModeSectionView: View {
                     AtlasBadge("Limited Range", style: .muted)
                 }
                 .padding(6)
-                .background(!item.isForceRGBActive && !item.capabilities.supportsForceRGB ? Color.accentColor.opacity(0.12) : Color.clear)
+                .background(!item.isForceRGBActive ? Color.accentColor.opacity(0.12) : Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
             }
             .buttonStyle(.plain)
