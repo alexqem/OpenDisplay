@@ -89,8 +89,20 @@ public final class ColorProfileController: @unchecked Sendable {
                 guard ext == ColorProfileConstants.iccExtension || ext == ColorProfileConstants.icmExtension else {
                     continue
                 }
-                seenPaths.insert(url)
 
+                // Verify profile header: must be display monitor profile (class == "mntr") and RGB color space ("RGB ")
+                guard let handle = try? FileHandle(forReadingFrom: url) else { continue }
+                defer { try? handle.close() }
+                let headerData = handle.readData(ofLength: 128)
+                guard headerData.count >= 20 else { continue }
+
+                let devClass = String(decoding: headerData[12..<16], as: UTF8.self).trimmingCharacters(in: .whitespaces)
+                let colorSpace = String(decoding: headerData[16..<20], as: UTF8.self).trimmingCharacters(in: .whitespaces)
+
+                // Only allow monitor RGB profiles; printer (CMYK), abstract (Lab), and grayscale profiles cause SkyLight assertion crashes
+                guard devClass == "mntr" && colorSpace == "RGB" else { continue }
+
+                seenPaths.insert(url)
                 let name = url.deletingPathExtension().lastPathComponent
                 profiles.append(ICCProfileInfo(name: name, path: url))
             }
