@@ -20,7 +20,6 @@ Thumbs.db
 # Local LLM Agent Directives
 AGENTS.md
 **/AGENTS.md
-plan.md
 schemas/
 BetterDisplay-v5.1.1.dmg
 .agents/
