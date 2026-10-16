@@ -137,7 +137,7 @@ public enum ResolutionConstants {
     public static let marketingAspectAliases: [Int: [Int: String]] = [
         64: [27: "21:9"],
         43: [18: "21:9"],
-        8:  [5:  "16:10"]
+        8: [5: "16:10"]
     ]
 }
 
@@ -151,5 +151,3 @@ public enum DisplayGroupConstants {
     public static let maxGroupNameLength: Int = 32
     public static let defaultGroupName: String = "Display Group"
 }
-
-

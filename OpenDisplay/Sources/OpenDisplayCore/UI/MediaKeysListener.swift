@@ -59,7 +59,7 @@ public final class MediaKeysListener {
             place: .headInsertEventTap,
             options: .defaultTap,
             eventsOfInterest: mask,
-            callback: { (proxy, type, event, refcon) -> Unmanaged<CGEvent>? in
+            callback: { (_, _, event, refcon) -> Unmanaged<CGEvent>? in
                 guard let refcon else { return Unmanaged.passUnretained(event) }
                 let listener = Unmanaged<MediaKeysListener>.fromOpaque(refcon).takeUnretainedValue()
 

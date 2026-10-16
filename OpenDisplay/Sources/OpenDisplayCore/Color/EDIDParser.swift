@@ -114,7 +114,7 @@ public enum EDIDParser {
         var cursor = extStart + EDIDConstants.CTA861Structure.dataBlockCollectionStartOffset
 
         var isHDMI = false
-        var physicalAddr: String? = nil
+        var physicalAddr: String?
 
         while cursor < dataBlockEnd {
             let header = bytes[cursor]

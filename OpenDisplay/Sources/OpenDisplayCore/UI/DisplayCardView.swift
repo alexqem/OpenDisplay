@@ -3,7 +3,7 @@ import SwiftUI
 import AppKit
 import CoreGraphics
 
-/// Clean, modular progressive-disclosure Display Card View following Atlas / TypeUI and SwiftUI Pro rules
+/// Clean native macOS Card View with translucent glass background and subtle border
 public struct DisplayCardView: View {
     @ObservedObject public var item: DisplayItemModel
 
@@ -29,20 +29,21 @@ public struct DisplayCardView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: AtlasTheme.fontCaptionMedium))
-                    Text("SOFTWARE DISCONNECTED (BLANKED)")
-                        .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
+                    Text("Disconnected")
+                        .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .medium))
                 }
-                .foregroundStyle(AtlasTheme.warningOrange)
+                .foregroundStyle(Color.orange)
                 .padding(.top, 2)
             }
         }
-        .padding(14)
-        .background(AtlasTheme.surfaceCard)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: AtlasTheme.cardRadius, style: .continuous)
+                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+        )
         .overlay(
-            Rectangle().stroke(
-                item.isDisconnected ? AtlasTheme.warningOrange : AtlasTheme.borderDefault,
-                lineWidth: AtlasTheme.borderWidth
-            )
+            RoundedRectangle(cornerRadius: AtlasTheme.cardRadius, style: .continuous)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
         )
     }
 }

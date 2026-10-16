@@ -11,29 +11,27 @@ public struct DisplayResolutionModePickerView: View {
     }
 
     public var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "aspectratio")
-                .font(.system(size: AtlasTheme.fontCaptionMedium))
-                .foregroundStyle(AtlasTheme.cobalt)
+        HStack(spacing: 8) {
+            Label("Resolution", systemImage: "display")
+                .font(.system(size: AtlasTheme.fontBodySmall, weight: .medium))
+                .foregroundStyle(Color.primary)
 
-            Text("Mode:")
-                .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .bold))
-                .foregroundStyle(AtlasTheme.textPrimary)
+            Spacer()
 
             Picker("", selection: resolutionBinding) {
                 if item.availableResolutions.isEmpty {
-                    Text("System Default").tag("" as String?)
+                    Text("Default").tag("" as String?)
                 } else {
                     if !item.recommendedResolutions.isEmpty {
-                        Section(header: Text("RECOMMENDED")) {
+                        Section(header: Text("Recommended")) {
                             ForEach(item.recommendedResolutions) { mode in
-                                Text("★ \(mode.userLabel)").tag(mode.id as String?)
+                                Text(mode.userLabel).tag(mode.id as String?)
                             }
                         }
                     }
 
                     if !item.otherResolutions.isEmpty {
-                        Section(header: Text("SCALED / LOW RES")) {
+                        Section(header: Text("Other Modes")) {
                             ForEach(item.otherResolutions) { mode in
                                 Text("\(mode.userLabel) (\(mode.tier.rawValue))").tag(mode.id as String?)
                             }
@@ -44,27 +42,20 @@ public struct DisplayResolutionModePickerView: View {
             .labelsHidden()
             .pickerStyle(.menu)
             .controlSize(.small)
-            .frame(maxWidth: .infinity)
-
-            if let cur = item.availableResolutions.first(where: { $0.id == item.selectedResolutionId }) {
-                if cur.isRecommended {
-                    AtlasBadge("RECOMMENDED", style: .lime)
-                } else if cur.isHiDPI {
-                    AtlasBadge("HiDPI", style: .brand)
-                } else {
-                    AtlasBadge("LOW-RES", style: .muted)
-                }
-            }
+            .frame(maxWidth: 160)
         }
         .padding(.vertical, 2)
     }
 
     private var resolutionBinding: Binding<String?> {
         Binding(
-            get: { item.selectedResolutionId },
-            set: { modeId in
-                guard let modeId,
-                      let mode = item.availableResolutions.first(where: { $0.id == modeId }) else { return }
+            get: {
+                item.selectedResolutionId ?? item.availableResolutions.first?.id
+            },
+            set: { newId in
+                guard let id = newId, let mode = item.availableResolutions.first(where: { $0.id == id }) else {
+                    return
+                }
                 store.setResolution(item, mode: mode)
             }
         )

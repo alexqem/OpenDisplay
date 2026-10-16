@@ -5,7 +5,6 @@ import CoreGraphics
 /// Presets section: apply, snapshot, delete, import/export JSON
 public struct PresetsSectionView: View {
     @ObservedObject public var store: WorkspaceStore
-    @State private var newPresetName: String = ""
 
     public init(store: WorkspaceStore) {
         self.store = store
@@ -18,31 +17,46 @@ public struct PresetsSectionView: View {
             }
 
             HStack(spacing: 6) {
-                TextField("Snapshot name", text: $newPresetName)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: AtlasTheme.fontBodySmall, design: .monospaced))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(AtlasTheme.surfaceHeader)
-                    .overlay(
-                        Rectangle().stroke(AtlasTheme.borderMedium, lineWidth: AtlasTheme.borderWidth)
+                TextField(
+                    "Snapshot name",
+                    text: Binding(
+                        get: { store.newPresetDraftName },
+                        set: { store.newPresetDraftName = $0 }
                     )
+                )
+                .textFieldStyle(.roundedBorder)
+                .font(.system(size: AtlasTheme.fontBodySmall))
 
-                AtlasIconButton(systemName: "plus.square.on.square") {
-                    let name = newPresetName.isEmpty
+                Button {
+                    let name = store.newPresetDraftName.isEmpty
                         ? "Snapshot \(store.presets.count)"
-                        : newPresetName
+                        : store.newPresetDraftName
                     store.saveCurrentStateAsPreset(named: name)
-                    newPresetName = ""
+                    store.newPresetDraftName = ""
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 11, weight: .medium))
                 }
+                .controlSize(.small)
+                .help("Save current state as preset")
 
-                AtlasIconButton(systemName: "tray.and.arrow.down") {
+                Button {
                     store.importPresets()
+                } label: {
+                    Image(systemName: "square.and.arrow.down")
+                        .font(.system(size: 11, weight: .medium))
                 }
+                .controlSize(.small)
+                .help("Import presets")
 
-                AtlasIconButton(systemName: "square.and.arrow.up") {
+                Button {
                     store.exportPresets()
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 11, weight: .medium))
                 }
+                .controlSize(.small)
+                .help("Export presets")
             }
         }
     }
@@ -52,27 +66,30 @@ public struct PresetsSectionView: View {
             Button {
                 store.applyPreset(preset)
             } label: {
-                HStack(spacing: 5) {
+                HStack(spacing: 6) {
                     Image(systemName: preset.icon)
-                        .font(.system(size: AtlasTheme.fontCaptionMedium))
+                        .font(.system(size: 11))
                     Text(preset.name)
-                        .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
+                        .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .medium))
                         .lineLimit(1)
                 }
-                .foregroundStyle(AtlasTheme.cobalt)
-                .padding(.horizontal, 8)
+                .foregroundStyle(Color.primary)
+                .padding(.horizontal, 10)
                 .padding(.vertical, 4)
-                .background(AtlasTheme.surfaceCard)
-                .overlay(
-                    Rectangle().stroke(AtlasTheme.borderMedium, lineWidth: AtlasTheme.borderWidth)
-                )
+                .background(Color.primary.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: AtlasTheme.controlRadius, style: .continuous))
             }
             .buttonStyle(.plain)
 
             if !preset.isBuiltin {
-                AtlasIconButton(systemName: "xmark") {
+                Button {
                     store.deletePreset(preset)
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(Color.secondary)
                 }
+                .buttonStyle(.plain)
             }
             Spacer()
         }
@@ -89,7 +106,7 @@ public struct VirtualSectionView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
+            HStack(spacing: 8) {
                 Picker("", selection: $store.selectedAspect) {
                     ForEach(DisplayAspectPreset.allCases, id: \.self) { preset in
                         Text(preset.rawValue).tag(preset)
@@ -98,7 +115,7 @@ public struct VirtualSectionView: View {
                 .labelsHidden()
                 .pickerStyle(.menu)
                 .controlSize(.small)
-                .frame(width: AtlasTheme.pickerWidth)
+                .frame(width: 90)
 
                 Picker("", selection: $store.selectedRefreshRate) {
                     ForEach(VirtualDisplayLimits.standardRefreshRates, id: \.self) { rate in
@@ -108,56 +125,45 @@ public struct VirtualSectionView: View {
                 .labelsHidden()
                 .pickerStyle(.menu)
                 .controlSize(.small)
-                .frame(width: AtlasTheme.pickerNarrowWidth)
+                .frame(width: 76)
 
-                Text("HiDPI")
-                    .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
-                    .foregroundStyle(AtlasTheme.textBody)
-                AtlasSwitch(isOn: $store.isHiDPIEnabled, activeColor: AtlasTheme.cobalt)
+                Toggle("HiDPI", isOn: $store.isHiDPIEnabled)
+                    .toggleStyle(.switch)
+                    .controlSize(.mini)
+                    .font(.system(size: AtlasTheme.fontCaptionMedium))
 
                 Spacer()
 
                 Button {
                     store.createVirtualDisplay()
                 } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: "plus.rectangle.on.rectangle")
-                            .font(.system(size: AtlasTheme.fontCaptionMedium))
-                        Text("Create")
-                            .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .bold))
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(AtlasTheme.cobalt)
-                    .overlay(
-                        Rectangle().stroke(AtlasTheme.cobaltDark, lineWidth: AtlasTheme.borderWidth)
-                    )
+                    Text("Add")
+                        .font(.system(size: 11, weight: .medium))
                 }
-                .buttonStyle(.plain)
+                .controlSize(.small)
             }
 
             if !store.virtualDisplays.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
                         ForEach(store.virtualDisplays) { chip in
-                            HStack(spacing: 4) {
+                            HStack(spacing: 6) {
                                 Text(chip.name)
-                                    .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
-                                    .foregroundStyle(AtlasTheme.cobalt)
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundStyle(Color.primary)
                                     .lineLimit(1)
                                 Button {
                                     store.removeVirtualDisplay(id: chip.id)
                                 } label: {
                                     Image(systemName: "xmark")
                                         .font(.system(size: 8, weight: .bold))
-                                        .foregroundStyle(AtlasTheme.textMuted)
+                                        .foregroundStyle(Color.secondary)
                                 }
                                 .buttonStyle(.plain)
                             }
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(AtlasTheme.cobaltSofter)
+                            .background(Color.primary.opacity(0.06))
                             .clipShape(Capsule())
                         }
                     }
@@ -176,9 +182,10 @@ public struct SystemSectionView: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             AtlasToggleRow(
                 title: "Night Shift",
+                helpText: "Shifts display colors to the warmer end of the spectrum after dark to reduce eye strain.",
                 isOn: Binding(
                     get: { store.isNightShiftOn },
                     set: { _ in store.toggleNightShift() }
@@ -188,6 +195,7 @@ public struct SystemSectionView: View {
             if store.isTrueToneSupported {
                 AtlasToggleRow(
                     title: "True Tone",
+                    helpText: "Automatically adapts display color temperature based on ambient lighting conditions.",
                     isOn: Binding(
                         get: { store.isTrueToneOn },
                         set: { _ in store.toggleTrueTone() }
@@ -197,26 +205,16 @@ public struct SystemSectionView: View {
 
             AtlasToggleRow(
                 title: "Ambient Sync",
+                helpText: "Synchronizes brightness of connected external displays with the Mac built-in ambient light sensor.",
                 isOn: Binding(
                     get: { store.isAmbientSyncOn },
                     set: { store.setAmbientSync($0) }
-                ),
-                trailing: {
-                    Slider(
-                        value: Binding(
-                            get: { store.ambientSensitivity },
-                            set: { store.setAmbientSensitivity($0) }
-                        ),
-                        in: AutoBrightnessConstants.minSensitivity...AutoBrightnessConstants.maxSensitivity
-                    )
-                    .tint(AtlasTheme.cobaltSoft)
-                    .frame(width: AtlasTheme.inlineSliderWidth)
-                    .disabled(!store.isAmbientSyncOn)
-                }
+                )
             )
 
             AtlasToggleRow(
-                title: "Media Keys",
+                title: "Keyboard Brightness Keys",
+                helpText: "Allows controlling external monitor brightness using Apple keyboard F1/F2 keys.",
                 isOn: Binding(
                     get: { store.isMediaKeysOn },
                     set: { store.setMediaKeys($0) }
@@ -225,51 +223,29 @@ public struct SystemSectionView: View {
 
             AtlasToggleRow(
                 title: "Launch at Login",
+                helpText: "Starts OpenDisplay automatically in background when logging into macOS.",
                 isOn: Binding(
                     get: { store.isLaunchAtLoginOn },
                     set: { _ in store.toggleLaunchAtLogin() }
                 )
             )
 
-            AtlasToggleRow(
-                title: "PiP Stream",
-                isOn: Binding(
-                    get: { store.isPipOn },
-                    set: { _ in
-                        if let target = store.pipDisplayID ?? store.displays.first?.id {
-                            store.togglePip(for: target)
+            // PiP Stream Toggle
+            if #available(macOS 12.3, *) {
+                AtlasToggleRow(
+                    title: "Picture-in-Picture Stream",
+                    helpText: "Mirrors a real-time floating preview window of a display via ScreenCaptureKit.",
+                    isOn: Binding(
+                        get: { store.isPipOn },
+                        set: { _ in
+                            if let first = store.displays.first {
+                                store.togglePip(for: first.id)
+                            }
                         }
-                    }
-                ),
-                trailing: {
-                    Picker("", selection: pipTargetBinding) {
-                        ForEach(store.displays.filter { !$0.isVirtual }) { display in
-                            Text(display.name).tag(display.id)
-                        }
-                    }
-                    .labelsHidden()
-                    .pickerStyle(.menu)
-                    .controlSize(.small)
-                    .frame(width: AtlasTheme.pickerWidth)
-                }
-            )
-        }
-    }
-
-    private var pipTargetBinding: Binding<CGDirectDisplayID> {
-        Binding(
-            get: { store.pipDisplayID ?? store.displays.first(where: { !$0.isVirtual })?.id ?? 0 },
-            set: { newTarget in
-                if store.isPipOn {
-                    store.togglePip(for: store.pipDisplayID ?? newTarget)
-                    if !store.isPipOn {
-                        store.togglePip(for: newTarget)
-                    }
-                } else if newTarget != 0 {
-                    store.pipDisplayID = newTarget
-                }
+                    )
+                )
             }
-        )
+        }
     }
 }
 #endif

@@ -1,7 +1,7 @@
 #if os(macOS) && arch(arm64)
 import SwiftUI
 
-/// Hardware status strip showing negotiated protocol capabilities (Apple DisplayServices, DDC, HDMI, 10-Bit, CEC)
+/// Hardware status strip showing negotiated protocol capabilities
 public struct DisplayCardStatusBadgeRow: View {
     @ObservedObject public var item: DisplayItemModel
 
@@ -10,25 +10,19 @@ public struct DisplayCardStatusBadgeRow: View {
     }
 
     public var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 5) {
             if item.isBuiltin {
-                AtlasBadge("APPLE DISPLAYSERVICES", style: .brand)
+                AtlasBadge("DisplayServices", style: .brand)
             } else if item.isVirtual {
-                AtlasBadge("COREDISPLAY VIRTUAL", style: .lime)
-            } else if item.capabilities.isHDMI {
-                AtlasBadge("HDMI-SINK", style: .success)
+                AtlasBadge("Virtual", style: .brand)
             } else if item.capabilities.supportsDDC {
-                AtlasBadge("DDC READY", style: .success)
+                AtlasBadge("DDC/CI", style: .success)
             } else {
-                AtlasBadge("GAMMA LUT ONLY", style: .warning)
+                AtlasBadge("Gamma LUT", style: .warning)
             }
 
             if item.capabilities.supports10BitDeepColor {
-                AtlasBadge("10-BIT", style: .brand)
-            }
-
-            if let addr = item.capabilities.physicalAddress {
-                AtlasBadge("CEC: \(addr)", style: .muted)
+                AtlasBadge("10-Bit", style: .muted)
             }
 
             Spacer()

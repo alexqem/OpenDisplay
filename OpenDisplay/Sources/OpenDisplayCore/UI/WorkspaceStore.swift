@@ -37,6 +37,8 @@ public final class WorkspaceStore: ObservableObject {
     @Published public var isLaunchAtLoginOn: Bool = false
     @Published public var isPipOn: Bool = false
     @Published public var pipDisplayID: CGDirectDisplayID?
+    @Published public var newPresetDraftName: String = ""
+    @Published public var activeTooltipText: String?
 
     public let colorProfiles: [ICCProfileInfo]
 
@@ -271,4 +273,3 @@ public final class WorkspaceStore: ObservableObject {
     }
 }
 #endif
-

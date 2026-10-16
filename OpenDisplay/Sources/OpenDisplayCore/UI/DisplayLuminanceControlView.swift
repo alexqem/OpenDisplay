@@ -6,52 +6,55 @@ public struct DisplayLuminanceControlView: View {
     @ObservedObject public var item: DisplayItemModel
     @ObservedObject private var store = WorkspaceStore.shared
 
-    @State private var isEditingBrightness: Bool = false
-    @State private var brightnessInputText: String = ""
-
     public init(item: DisplayItemModel) {
         self.item = item
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("LUMINANCE")
-                    .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
-                    .foregroundStyle(AtlasTheme.textBody)
+                Label("Brightness", systemImage: "sun.max.fill")
+                    .font(.system(size: AtlasTheme.fontBodySmall, weight: .medium))
+                    .foregroundStyle(Color.primary)
 
                 Spacer()
 
-                if isEditingBrightness {
-                    TextField("", text: $brightnessInputText, onCommit: commitBrightnessInput)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: AtlasTheme.fontBodySmall, weight: .bold, design: .monospaced))
-                        .foregroundStyle(AtlasTheme.cobalt)
-                        .frame(width: 44)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 1)
-                        .background(AtlasTheme.surfaceHeader)
-                        .overlay(
-                            Rectangle().stroke(AtlasTheme.cobalt, lineWidth: AtlasTheme.borderWidth)
-                        )
+                if item.isEditingBrightness {
+                    TextField(
+                        "",
+                        text: Binding(
+                            get: { item.brightnessInputText },
+                            set: { item.brightnessInputText = $0 }
+                        ),
+                        onCommit: commitBrightnessInput
+                    )
+                    .textFieldStyle(.plain)
+                    .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
+                    .foregroundStyle(Color.primary)
+                    .frame(width: 42)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 2)
+                    .background(Color.primary.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
                 } else {
                     Button(action: {
-                        brightnessInputText = "\(Int(item.brightness * 100))"
-                        isEditingBrightness = true
+                        item.brightnessInputText = "\(Int(item.brightness * 100))"
+                        item.isEditingBrightness = true
                     }) {
                         Text("\(Int(item.brightness * 100))%")
-                            .font(.system(size: AtlasTheme.fontBodySmall, weight: .bold, design: .monospaced))
-                            .foregroundStyle(AtlasTheme.cobalt)
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 1)
-                            .background(AtlasTheme.cobaltSofter)
+                            .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .medium))
+                            .foregroundStyle(Color.secondary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.primary.opacity(0.06))
+                            .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
                     .help("Click to enter exact percentage")
                 }
             }
 
-            HStack(spacing: 6) {
+            HStack(spacing: 8) {
                 AtlasIconButton(systemName: "minus") {
                     let next = max(0.0, item.brightness - MediaKeyConstants.brightnessStep)
                     store.setBrightness(item, next, immediate: true)
@@ -65,7 +68,7 @@ public struct DisplayLuminanceControlView: View {
                     ),
                     in: 0...1
                 )
-                .tint(AtlasTheme.cobalt)
+                .controlSize(.small)
                 .disabled(item.isDisconnected)
 
                 AtlasIconButton(systemName: "plus") {
@@ -78,28 +81,23 @@ public struct DisplayLuminanceControlView: View {
                 if !item.isBuiltin && !item.isVirtual {
                     Button(action: { store.toggleXDROverdrive(item) }) {
                         Text("XDR")
-                            .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
-                            .foregroundStyle(item.isXDROverdriveEnabled ? AtlasTheme.cobaltDark : AtlasTheme.textMuted)
-                            .padding(.horizontal, 6)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(item.isXDROverdriveEnabled ? .white : Color.primary)
+                            .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(item.isXDROverdriveEnabled ? AtlasTheme.electricLime : AtlasTheme.surfaceCard)
-                            .overlay(
-                                Rectangle().stroke(
-                                    item.isXDROverdriveEnabled ? AtlasTheme.electricLime : AtlasTheme.borderMedium,
-                                    lineWidth: AtlasTheme.borderWidth
-                                )
-                            )
+                            .background(item.isXDROverdriveEnabled ? Color.accentColor : Color.primary.opacity(0.06))
+                            .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
                     }
                     .buttonStyle(.plain)
-                    .help("XDR / Hardware Brightness Overdrive (Boost peak nits)")
+                    .help("Boost peak hardware brightness")
                 }
             }
         }
     }
 
     private func commitBrightnessInput() {
-        isEditingBrightness = false
-        if let val = Double(brightnessInputText) {
+        item.isEditingBrightness = false
+        if let val = Double(item.brightnessInputText) {
             let clamped = max(0.0, min(100.0, val)) / 100.0
             store.setBrightness(item, clamped, immediate: true)
         }

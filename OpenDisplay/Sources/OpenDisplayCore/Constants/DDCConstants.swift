@@ -91,4 +91,3 @@ public enum DDCInputSource: UInt16, CaseIterable, Sendable, Identifiable {
         return allCases.first { $0.cliIdentifier == normalized || String($0.rawValue) == normalized }
     }
 }
-

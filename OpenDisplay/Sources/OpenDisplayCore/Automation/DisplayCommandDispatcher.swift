@@ -166,7 +166,6 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
         return masterSuccess
     }
 
-
     /// Software disconnect / blank display
     public func disconnect(displayID: CGDirectDisplayID) -> Bool {
         return DisplayPowerStateController.shared.disconnectDisplay(displayID: displayID)

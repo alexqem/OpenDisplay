@@ -2,7 +2,7 @@
 import SwiftUI
 import AppKit
 
-/// SwiftUI Main Popover Menu View for OpenDisplay styled with the Atlas / TypeUI Swiss neo-brutalist design system
+/// Native macOS Glassmorphism Main Popover Menu View for OpenDisplay
 public struct AppMenuView: View {
     @ObservedObject private var store = WorkspaceStore.shared
 
@@ -28,20 +28,20 @@ public struct AppMenuView: View {
                     AtlasEyebrow(title: "System")
                     SystemSectionView(store: store)
                 }
-                .padding(16)
+                .padding(14)
             }
             .frame(maxHeight: AtlasTheme.maxScrollHeight)
 
             footer
         }
         .frame(width: AtlasTheme.popoverWidth)
-        .background(AtlasTheme.surfaceCard)
+        .background(.ultraThinMaterial)
         .onAppear {
             store.refresh()
         }
     }
 
-    // MARK: - Displays Section with Rich Empty State
+    // MARK: - Displays Section
     @ViewBuilder
     private var displaysSection: some View {
         AtlasEyebrow(title: "Displays", trailing: "\(store.displays.count)")
@@ -50,17 +50,17 @@ public struct AppMenuView: View {
             VStack(spacing: 8) {
                 HStack(spacing: 6) {
                     Image(systemName: "display.trianglebadge.exclamationmark")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(AtlasTheme.warningOrange)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Color.orange)
 
-                    Text("[NO MONITORS DETECTED ON IOKIT BUS]")
-                        .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
-                        .foregroundStyle(AtlasTheme.warningOrange)
+                    Text("No Displays Detected")
+                        .font(.system(size: AtlasTheme.fontBodySmall, weight: .medium))
+                        .foregroundStyle(Color.primary)
                 }
 
-                Text("Check Thunderbolt/HDMI cable or create a software dummy screen below.")
-                    .font(.system(size: AtlasTheme.fontCaptionMedium))
-                    .foregroundStyle(AtlasTheme.textMuted)
+                Text("Check your display connection or create a virtual screen below.")
+                    .font(.system(size: AtlasTheme.fontCaptionSmall))
+                    .foregroundStyle(Color.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 10)
 
@@ -69,26 +69,21 @@ public struct AppMenuView: View {
                 }) {
                     HStack(spacing: 6) {
                         Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: AtlasTheme.fontCaptionMedium))
-                        Text("Rescan Hardware Bus")
-                            .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .bold, design: .monospaced))
+                            .font(.system(size: 11))
+                        Text("Detect Displays")
+                            .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .medium))
                     }
-                    .foregroundStyle(AtlasTheme.cobalt)
                     .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(AtlasTheme.surfaceCard)
-                    .overlay(
-                        Rectangle().stroke(AtlasTheme.cobalt, lineWidth: AtlasTheme.borderWidth)
-                    )
+                    .padding(.vertical, 5)
+                    .background(Color.primary.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: AtlasTheme.controlRadius, style: .continuous))
                 }
                 .buttonStyle(.plain)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(AtlasTheme.surfaceHeader)
-            .overlay(
-                Rectangle().stroke(AtlasTheme.borderMedium, lineWidth: AtlasTheme.borderWidth)
-            )
+            .background(Color.primary.opacity(0.03))
+            .clipShape(RoundedRectangle(cornerRadius: AtlasTheme.cardRadius, style: .continuous))
         } else {
             ForEach(store.displays) { item in
                 DisplayCardView(item: item)
@@ -99,62 +94,57 @@ public struct AppMenuView: View {
     // MARK: - Header
     private var header: some View {
         HStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("WORKSPACE")
-                    .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
-                    .foregroundStyle(AtlasTheme.textMuted)
-                Text("OpenDisplay")
-                    .font(.system(size: AtlasTheme.fontHeadline, weight: .bold))
-                    .foregroundStyle(AtlasTheme.cobalt)
-            }
+            Image(systemName: "display.2")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.accentColor)
+
+            Text("OpenDisplay")
+                .font(.system(size: AtlasTheme.fontHeadline, weight: .semibold))
+                .foregroundStyle(Color.primary)
 
             Spacer()
 
-            Text("ARM64 NATIVE")
-                .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .bold))
-                .foregroundStyle(AtlasTheme.cobaltDark)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(AtlasTheme.electricLime)
-                .clipShape(Capsule())
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(
-            ZStack {
-                AtlasTheme.surfaceHeader
-                AtlasBlueprintGrid()
+            Button(action: {
+                store.refresh()
+            }) {
+                Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Color.secondary)
+                    .frame(width: 24, height: 24)
+                    .background(Color.primary.opacity(0.05))
+                    .clipShape(Circle())
             }
-        )
+            .buttonStyle(.plain)
+            .help("Refresh displays")
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color.primary.opacity(0.02))
         .overlay(
-            Rectangle()
-                .frame(height: AtlasTheme.borderWidth)
-                .foregroundStyle(AtlasTheme.borderDefault),
+            Divider().opacity(0.4),
             alignment: .bottom
         )
     }
 
-    // MARK: - Footer
+    // MARK: - Dynamic Status Footer
     private var footer: some View {
         HStack(spacing: 8) {
-            Button(action: {
-                store.refresh()
-            }) {
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: AtlasTheme.fontCaptionSmall))
-                    Text("RESCAN")
-                        .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
+            if let tip = store.activeTooltipText {
+                HStack(spacing: 5) {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(Color.accentColor)
+                    Text(tip)
+                        .font(.system(size: 10, weight: .regular))
+                        .foregroundStyle(Color.secondary)
+                        .lineLimit(1)
                 }
-                .foregroundStyle(AtlasTheme.textBody)
+                .transition(.opacity)
+            } else {
+                Text("OpenDisplay")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color.secondary)
             }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Text("V2 · 100% FREE · ZERO TELEMETRY")
-                .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
-                .foregroundStyle(AtlasTheme.textMuted)
 
             Spacer()
 
@@ -162,24 +152,21 @@ public struct AppMenuView: View {
                 NSApplication.shared.terminate(nil)
             }) {
                 Text("Quit")
-                    .font(.system(size: AtlasTheme.fontBodySmall, weight: .medium))
-                    .foregroundStyle(AtlasTheme.textBody)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color.secondary)
                     .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(AtlasTheme.surfaceCard)
-                    .overlay(
-                        Rectangle().stroke(AtlasTheme.borderMedium, lineWidth: AtlasTheme.borderWidth)
-                    )
+                    .padding(.vertical, 4)
+                    .background(Color.primary.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(AtlasTheme.surfaceHeader)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 9)
+        .frame(height: 38)
+        .background(Color.primary.opacity(0.02))
         .overlay(
-            Rectangle()
-                .frame(height: AtlasTheme.borderWidth)
-                .foregroundStyle(AtlasTheme.borderDefault),
+            Divider().opacity(0.4),
             alignment: .top
         )
     }

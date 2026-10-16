@@ -12,20 +12,20 @@ public struct DisplayAudioControlView: View {
 
     public var body: some View {
         if !item.isBuiltin && !item.isVirtual && item.capabilities.supportsBasicAudio {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text("AUDIO VOLUME")
-                        .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
-                        .foregroundStyle(AtlasTheme.textBody)
+                    Label("Volume", systemImage: item.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                        .font(.system(size: AtlasTheme.fontBodySmall, weight: .medium))
+                        .foregroundStyle(Color.primary)
 
                     Spacer()
 
-                    Text(item.isMuted ? "MUTED" : "\(Int(item.volume * 100))%")
-                        .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .bold, design: .monospaced))
-                        .foregroundStyle(item.isMuted ? AtlasTheme.warningOrange : AtlasTheme.textMuted)
+                    Text(item.isMuted ? "Muted" : "\(Int(item.volume * 100))%")
+                        .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .medium))
+                        .foregroundStyle(item.isMuted ? Color.orange : Color.secondary)
                 }
 
-                HStack(spacing: 6) {
+                HStack(spacing: 8) {
                     AtlasIconButton(systemName: item.isMuted ? "speaker.slash.fill" : "speaker.wave.2") {
                         store.toggleMute(item)
                     }
@@ -38,7 +38,7 @@ public struct DisplayAudioControlView: View {
                         ),
                         in: 0...1
                     )
-                    .tint(AtlasTheme.cobalt)
+                    .controlSize(.small)
                     .disabled(item.isDisconnected || item.isMuted)
                 }
             }

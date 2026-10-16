@@ -14,37 +14,35 @@ public struct DisplayCardHeaderView: View {
         HStack(spacing: 8) {
             Image(systemName: headerIcon)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(AtlasTheme.cobalt)
+                .foregroundStyle(Color.accentColor)
 
             Text(item.name)
-                .font(.system(size: AtlasTheme.fontBodyMedium, weight: .bold))
-                .foregroundStyle(AtlasTheme.textPrimary)
+                .font(.system(size: AtlasTheme.fontBodyMedium, weight: .semibold))
+                .foregroundStyle(Color.primary)
                 .lineLimit(1)
 
             if item.isVirtual {
-                AtlasBadge("VIRTUAL", style: .lime)
+                AtlasBadge("Virtual", style: .brand)
             }
             if item.isMirrored {
-                AtlasBadge("MIRRORED", style: .brand)
+                AtlasBadge("Mirrored", style: .muted)
             }
             if item.isHiDPI {
-                AtlasBadge("HiDPI", style: .muted)
+                AtlasBadge("HiDPI", style: .brand)
             }
             if item.isGroupMaster {
-                AtlasBadge("SYNC MASTER", style: .lime)
+                AtlasBadge("Master", style: .brand)
             } else if item.syncGroupMasterID != nil {
-                AtlasBadge("SYNC SLAVE", style: .brand)
+                AtlasBadge("Linked", style: .muted)
             }
 
             Spacer()
 
-            Text("ID: \(item.id)")
-                .font(.system(size: AtlasTheme.fontCaptionSmall, weight: .semibold, design: .monospaced))
-                .foregroundStyle(AtlasTheme.textMuted)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(AtlasTheme.cobaltSofter)
-                .clipShape(Capsule())
+            if item.isBuiltin {
+                Text("Built-in")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(Color.secondary)
+            }
         }
     }
 

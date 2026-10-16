@@ -32,4 +32,3 @@ public enum AutomationConstants {
     public static let flagSlave: String = "slave"
     public static let flagOffset: String = "offset"
 }
-
