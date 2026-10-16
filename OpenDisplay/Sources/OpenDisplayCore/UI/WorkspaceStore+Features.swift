@@ -102,48 +102,51 @@ extension WorkspaceStore {
     }
 
     public func togglePip(for displayID: CGDirectDisplayID) {
-        if isPipOn {
-            let previousID = pipDisplayID
-            dispatcher.stopPip()
-            isPipOn = false
-            pipDisplayID = nil
-            pipWindowID = nil
-            // If user clicked the same display that was active, treat as pure toggle off
-            if previousID == displayID {
-                return
+        cyclePipStream(
+            isTargetActive: pipDisplayID == displayID,
+            startAction: { !self.dispatcher.isVirtual(displayID: displayID) && self.dispatcher.startPip(displayID: displayID) },
+            onStarted: {
+                self.pipDisplayID = displayID
+                self.pipWindowID = nil
             }
-        }
-        if !dispatcher.isVirtual(displayID: displayID), dispatcher.startPip(displayID: displayID) {
-            isPipOn = true
-            pipDisplayID = displayID
-            pipWindowID = nil
-            dispatcher.setPipOpacity(CGFloat(pipOpacity))
-            dispatcher.setPipClickThrough(isPipClickThrough)
-        }
+        )
     }
 
     public func toggleWindowPip(for windowID: CGWindowID) {
+        cyclePipStream(
+            isTargetActive: pipWindowID == windowID,
+            startAction: { self.dispatcher.startWindowPip(windowID: windowID) },
+            onStarted: {
+                self.pipWindowID = windowID
+                self.pipDisplayID = nil
+            }
+        )
+    }
+
+    private func cyclePipStream(
+        isTargetActive: Bool,
+        startAction: () -> Bool,
+        onStarted: () -> Void
+    ) {
         if isPipOn {
-            let previousWinID = pipWindowID
             dispatcher.stopPip()
             isPipOn = false
             pipDisplayID = nil
             pipWindowID = nil
-            if previousWinID == windowID {
+            if isTargetActive {
                 return
             }
         }
-        if dispatcher.startWindowPip(windowID: windowID) {
+        if startAction() {
             isPipOn = true
-            pipWindowID = windowID
-            pipDisplayID = nil
+            onStarted()
             dispatcher.setPipOpacity(CGFloat(pipOpacity))
             dispatcher.setPipClickThrough(isPipClickThrough)
         }
     }
 
     public func setPipOpacityLevel(_ value: Double) {
-        pipOpacity = max(0.1, min(1.0, value))
+        pipOpacity = Double(PipConstants.clampedOpacity(CGFloat(value)))
         dispatcher.setPipOpacity(CGFloat(pipOpacity))
     }
 

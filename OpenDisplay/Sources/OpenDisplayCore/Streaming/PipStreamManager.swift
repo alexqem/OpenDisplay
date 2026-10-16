@@ -67,7 +67,8 @@ public final class PipStreamManager: @unchecked Sendable {
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
             return content.windows.compactMap { window in
-                guard window.frame.width > 50, window.frame.height > 50 else { return nil }
+                guard window.frame.width > PipConstants.minShareableWindowDimension,
+                      window.frame.height > PipConstants.minShareableWindowDimension else { return nil }
                 let title = window.title ?? ""
                 let app = window.owningApplication?.applicationName ?? "Unknown"
                 guard !title.isEmpty || !app.isEmpty else { return nil }

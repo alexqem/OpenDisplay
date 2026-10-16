@@ -32,6 +32,14 @@ public enum PipConstants {
     public static let defaultFrameRate: Int = 60
     public static let pixelFormat: OSType = kCVPixelFormatType_32BGRA
     public static let queueDepth: Int = 5
+    public static let minShareableWindowDimension: CGFloat = 50.0
+    public static let minOpacity: CGFloat = 0.1
+    public static let maxOpacity: CGFloat = 1.0
+
+    /// Clamp opacity within the valid safe display range (0.1 ... 1.0)
+    public static func clampedOpacity(_ value: CGFloat) -> CGFloat {
+        return max(minOpacity, min(maxOpacity, value))
+    }
 }
 
 /// Configuration options for real-time Picture-in-Picture streaming

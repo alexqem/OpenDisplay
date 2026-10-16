@@ -4,7 +4,6 @@ import SwiftUI
 /// Hardware status strip showing negotiated protocol capabilities and quick action toggles
 public struct DisplayCardStatusBadgeRow: View {
     @ObservedObject public var item: DisplayItemModel
-    @ObservedObject private var store = WorkspaceStore.shared
 
     public init(item: DisplayItemModel) {
         self.item = item
@@ -29,7 +28,7 @@ public struct DisplayCardStatusBadgeRow: View {
             // Display Notch toggle (if physical notch present on MacBook)
             if item.isBuiltin && item.hasPhysicalNotch {
                 Button(action: {
-                    store.toggleNotch(for: item)
+                    WorkspaceStore.shared.toggleNotch(for: item)
                 }) {
                     HStack(spacing: 3) {
                         Image(systemName: item.isNotchOverlayActive ? "eye.slash.fill" : "eye.fill")
