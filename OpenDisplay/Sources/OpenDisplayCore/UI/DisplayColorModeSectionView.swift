@@ -60,16 +60,18 @@ public struct DisplayColorModeSectionView: View {
     // MARK: - 1. Color Depth & Subsampling Options
     private var colorDepthRows: some View {
         VStack(alignment: .leading, spacing: 5) {
-            // Option 1: 8-bit SDR RGB Full Range (Default / Force RGB)
+            // Option 1: 8-bit SDR RGB Full Range (Default standard RGB mode)
             Button(action: {
                 if !item.isForceRGBActive {
                     store.toggleForceRGB(item)
+                } else {
+                    store.activeTooltipText = "Active: 8-bit SDR RGB Full Range"
                 }
             }) {
                 HStack(spacing: 6) {
-                    Image(systemName: item.isForceRGBActive ? "circle.fill" : "circle")
+                    Image(systemName: item.isForceRGBActive || item.capabilities.supportsForceRGB ? "circle.fill" : "circle")
                         .font(.system(size: 10))
-                        .foregroundStyle(item.isForceRGBActive ? Color.accentColor : Color.secondary)
+                        .foregroundStyle(item.isForceRGBActive || item.capabilities.supportsForceRGB ? Color.accentColor : Color.secondary)
 
                     Text("8-bit")
                         .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
@@ -82,7 +84,7 @@ public struct DisplayColorModeSectionView: View {
                     AtlasBadge("Full Range", style: .success)
                 }
                 .padding(6)
-                .background(item.isForceRGBActive ? Color.accentColor.opacity(0.12) : Color.clear)
+                .background(item.isForceRGBActive || item.capabilities.supportsForceRGB ? Color.accentColor.opacity(0.12) : Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
             }
             .buttonStyle(.plain)
@@ -91,12 +93,14 @@ public struct DisplayColorModeSectionView: View {
             Button(action: {
                 if item.isForceRGBActive {
                     store.toggleForceRGB(item)
+                } else {
+                    store.activeTooltipText = "Active: 8-bit SDR YCbCr 4:4:4 Limited Range"
                 }
             }) {
                 HStack(spacing: 6) {
-                    Image(systemName: !item.isForceRGBActive && !item.is10BitActive ? "circle.fill" : "circle")
+                    Image(systemName: !item.isForceRGBActive && !item.capabilities.supportsForceRGB ? "circle.fill" : "circle")
                         .font(.system(size: 10))
-                        .foregroundStyle(!item.isForceRGBActive && !item.is10BitActive ? Color.accentColor : Color.secondary)
+                        .foregroundStyle(!item.isForceRGBActive && !item.capabilities.supportsForceRGB ? Color.accentColor : Color.secondary)
 
                     Text("8-bit")
                         .font(.system(size: AtlasTheme.fontCaptionMedium, weight: .semibold))
@@ -110,7 +114,7 @@ public struct DisplayColorModeSectionView: View {
                     AtlasBadge("Limited Range", style: .muted)
                 }
                 .padding(6)
-                .background(!item.isForceRGBActive && !item.is10BitActive ? Color.accentColor.opacity(0.12) : Color.clear)
+                .background(!item.isForceRGBActive && !item.capabilities.supportsForceRGB ? Color.accentColor.opacity(0.12) : Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
             }
             .buttonStyle(.plain)
@@ -133,11 +137,9 @@ public struct DisplayColorModeSectionView: View {
                 .font(.system(size: 11))
                 .foregroundStyle(Color.secondary)
 
-            AtlasBadge("Pro", style: .brand)
-
             Text("Allow Forced HDR")
                 .font(.system(size: AtlasTheme.fontCaptionMedium))
-                .foregroundStyle(item.capabilities.supportsHDR ? Color.primary : Color.secondary)
+                .foregroundStyle(Color.primary)
 
             Spacer()
 
@@ -148,9 +150,8 @@ public struct DisplayColorModeSectionView: View {
             .toggleStyle(.switch)
             .controlSize(.mini)
             .labelsHidden()
-            .disabled(!item.capabilities.supportsHDR)
         }
-        .help(item.capabilities.supportsHDR ? "Toggle High Dynamic Range mode" : "Display does not declare HDR capabilities in EDID")
+        .help("Force High Dynamic Range mode via SkyLight")
     }
 
     // MARK: - 3. GPU Dithering Section

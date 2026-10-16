@@ -56,6 +56,7 @@ public final class WorkspaceStore: ObservableObject {
         colorProfiles = dispatcher.availableColorProfiles()
         reloadPresets()
         isTrueToneSupported = NightShiftTrueToneBridge.shared.isTrueToneSupported
+        isNightShiftOn = NightShiftTrueToneBridge.shared.isNightShiftEnabled
         isLaunchAtLoginOn = LaunchAtLoginController.shared.isEnabled
         mediaKeysListener.onAction = { [weak self] action in
             Task { @MainActor [weak self] in

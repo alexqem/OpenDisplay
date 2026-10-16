@@ -31,7 +31,23 @@ public final class NightShiftTrueToneBridge: @unchecked Sendable {
         guard (client as AnyObject).responds(to: sel) else {
             throw LuminanceError.operationFailed(reason: "CBBlueLightClient does not respond to setEnabled:")
         }
-        _ = (client as AnyObject).perform(sel, with: enabled)
+        typealias SetEnabledFunc = @convention(c) (AnyObject, Selector, Bool) -> Bool
+        let imp = (client as AnyObject).method(for: sel)
+        let fn = unsafeBitCast(imp, to: SetEnabledFunc.self)
+        _ = fn(client, sel, enabled)
+    }
+
+    /// Read active Night Shift enabled status
+    public var isNightShiftEnabled: Bool {
+        guard let client = blueLightClient else { return false }
+        let sel = Selector(("getBlueLightStatus:"))
+        guard (client as AnyObject).responds(to: sel) else { return false }
+        typealias GetStatusRawFunc = @convention(c) (AnyObject, Selector, UnsafeMutableRawPointer) -> Bool
+        let imp = (client as AnyObject).method(for: sel)
+        let fn = unsafeBitCast(imp, to: GetStatusRawFunc.self)
+        var buf = [UInt8](repeating: 0, count: 128)
+        let ok = fn(client, sel, &buf)
+        return ok && buf.count > 1 && (buf[0] != 0 || buf[1] != 0)
     }
 
     public func setNightShiftStrength(_ strength: Float) throws {

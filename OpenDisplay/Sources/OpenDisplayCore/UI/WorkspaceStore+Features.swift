@@ -26,15 +26,23 @@ extension WorkspaceStore {
     // MARK: - System Toggles
     public func toggleNightShift() {
         let target = !isNightShiftOn
+        activeTooltipText = "Toggling Night Shift..."
         if dispatcher.setNightShift(enabled: target) {
             isNightShiftOn = target
+            activeTooltipText = target ? "Night Shift enabled" : "Night Shift disabled"
+        } else {
+            activeTooltipText = "Failed to toggle Night Shift (CoreBrightness unavailable)"
         }
     }
 
     public func toggleTrueTone() {
         let target = !isTrueToneOn
+        activeTooltipText = "Toggling True Tone..."
         if dispatcher.setTrueTone(enabled: target) {
             isTrueToneOn = target
+            activeTooltipText = target ? "True Tone enabled" : "True Tone disabled"
+        } else {
+            activeTooltipText = "Failed to toggle True Tone"
         }
     }
 
