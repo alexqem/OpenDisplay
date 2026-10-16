@@ -18,7 +18,7 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
     @Published public var volume: Double
     @Published public var isMuted: Bool
     @Published public var isXDROverdriveEnabled: Bool
-    @Published public var isForceRGBActive: Bool
+    @Published public var isForceRGBActive: Bool = true
     @Published public var is10BitActive: Bool
     @Published public var isHDREnabled: Bool
     @Published public var isNotchOverlayActive: Bool

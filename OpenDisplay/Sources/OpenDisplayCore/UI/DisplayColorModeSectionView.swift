@@ -60,13 +60,10 @@ public struct DisplayColorModeSectionView: View {
     // MARK: - 1. Color Depth & Subsampling Options
     private var colorDepthRows: some View {
         VStack(alignment: .leading, spacing: 5) {
-            // Option 1: 8-bit SDR RGB Full Range (Default standard RGB mode)
+            // Option 1: 8-bit SDR RGB Full Range (Standard RGB output)
             Button {
-                if !item.isForceRGBActive {
-                    store.toggleForceRGB(item)
-                } else {
-                    store.activeTooltipText = "Active: 8-bit SDR RGB Full Range"
-                }
+                item.isForceRGBActive = true
+                store.activeTooltipText = "Active: 8-bit SDR RGB Full Range"
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: item.isForceRGBActive ? "circle.fill" : "circle")
@@ -91,11 +88,8 @@ public struct DisplayColorModeSectionView: View {
 
             // Option 2: 8-bit SDR YCbCr 4:4:4 Limited Range
             Button {
-                if item.isForceRGBActive {
-                    store.toggleForceRGB(item)
-                } else {
-                    store.activeTooltipText = "Active: 8-bit SDR YCbCr 4:4:4 Limited Range"
-                }
+                item.isForceRGBActive = false
+                store.activeTooltipText = "Active: 8-bit SDR YCbCr 4:4:4 Limited Range"
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: !item.isForceRGBActive ? "circle.fill" : "circle")

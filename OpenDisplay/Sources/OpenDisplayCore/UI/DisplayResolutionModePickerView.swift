@@ -50,7 +50,7 @@ public struct DisplayResolutionModePickerView: View {
     private var resolutionBinding: Binding<String?> {
         Binding(
             get: {
-                item.selectedResolutionId ?? item.availableResolutions.first?.id
+                item.selectedResolutionId ?? item.availableResolutions.first(where: { $0.isCurrent })?.id ?? item.availableResolutions.first?.id
             },
             set: { newId in
                 guard let id = newId, let mode = item.availableResolutions.first(where: { $0.id == id }) else {

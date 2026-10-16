@@ -14,6 +14,7 @@ public struct DisplayModeInfo: Sendable {
 public final class SkyLightModeEngine: @unchecked Sendable {
     private typealias CGSGetCurrentDisplayModeFunc = @convention(c) (CGDirectDisplayID, UnsafeMutablePointer<Int32>) -> CGError
     private typealias CGSGetNumberOfDisplayModesFunc = @convention(c) (CGDirectDisplayID, UnsafeMutablePointer<Int32>) -> CGError
+    private typealias CGSGetDisplayModeDescriptionOfLengthFunc = @convention(c) (CGDirectDisplayID, Int32, UnsafeMutableRawPointer, Int) -> CGError
     private typealias CGSConfigureDisplayModeFunc = @convention(c) (CGDisplayConfigRef, CGDirectDisplayID, Int32) -> CGError
     private typealias SLSIsDisplayModeVRRFunc = @convention(c) (CGDirectDisplayID, Int32) -> Bool
     private typealias SLSIsDisplayModeProMotionFunc = @convention(c) (CGDirectDisplayID, Int32) -> Bool
@@ -22,6 +23,7 @@ public final class SkyLightModeEngine: @unchecked Sendable {
     private let library: DynamicLibrary?
     private let getCurrentModeFn: CGSGetCurrentDisplayModeFunc?
     private let getModeCountFn: CGSGetNumberOfDisplayModesFunc?
+    private let getModeDescFn: CGSGetDisplayModeDescriptionOfLengthFunc?
     private let configureModeFn: CGSConfigureDisplayModeFunc?
     private let isVRRFn: SLSIsDisplayModeVRRFunc?
     private let isProMotionFn: SLSIsDisplayModeProMotionFunc?
@@ -36,6 +38,7 @@ public final class SkyLightModeEngine: @unchecked Sendable {
 
         self.getCurrentModeFn = lib?.resolve("CGSGetCurrentDisplayMode", as: CGSGetCurrentDisplayModeFunc.self)
         self.getModeCountFn = lib?.resolve("CGSGetNumberOfDisplayModes", as: CGSGetNumberOfDisplayModesFunc.self)
+        self.getModeDescFn = lib?.resolve("CGSGetDisplayModeDescriptionOfLength", as: CGSGetDisplayModeDescriptionOfLengthFunc.self)
         self.configureModeFn = lib?.resolve("CGSConfigureDisplayMode", as: CGSConfigureDisplayModeFunc.self)
         self.isVRRFn = lib?.resolve("SLSIsDisplayModeVRR", as: SLSIsDisplayModeVRRFunc.self)
         self.isProMotionFn = lib?.resolve("SLSIsDisplayModeProMotion", as: SLSIsDisplayModeProMotionFunc.self)
@@ -106,16 +109,74 @@ public final class SkyLightModeEngine: @unchecked Sendable {
 
     /// Enumerate all available display modes with classification and recommendation metadata
     public func availableModes(for displayID: CGDirectDisplayID) -> [DisplayResolutionDescriptor] {
-        guard let modeList = CGDisplayCopyAllDisplayModes(displayID, nil) as? [CGDisplayMode] else {
+        let currentModeNumber = getCurrentMode(displayID: displayID) ?? -1
+        let nativePixelWidth = CGDisplayPixelsWide(displayID)
+        let nativePixelHeight = CGDisplayPixelsHigh(displayID)
+
+        // Primary path: Enumerate via SkyLight CGSGetDisplayModeDescriptionOfLength
+        if let descFn = getModeDescFn, let getCount = getModeCountFn {
+            var count: Int32 = 0
+            if getCount(displayID, &count) == .success, count > 0 {
+                var descriptors: [DisplayResolutionDescriptor] = []
+                var seenKeys = Set<String>()
+
+                for m: Int32 in 0..<count {
+                    var buf = [UInt8](repeating: 0, count: 512)
+                    if descFn(displayID, m, &buf, buf.count) == .success {
+                        buf.withUnsafeBytes { raw in
+                            let u32 = raw.bindMemory(to: UInt32.self)
+                            let modeNum = Int32(u32[0])
+                            let pointW = Int(u32[2])
+                            let pointH = Int(u32[3])
+                            let rowBytes = Int(u32[5])
+                            guard pointW > 0, pointH > 0 else { return }
+
+                            let pixelW = rowBytes > 0 ? (rowBytes / 4) : pointW
+                            let scale = Double(pixelW) / Double(pointW)
+                            let pixelH = Int((Double(pointH) * scale).rounded())
+                            let hz = Double(u32[9])
+                            let isCurrent = (modeNum == currentModeNumber)
+
+                            let dedupeKey = "\(pointW)x\(pointH)@\(Int(hz.rounded()))_\(pixelW)x\(pixelH)"
+                            guard !seenKeys.contains(dedupeKey) else { return }
+                            seenKeys.insert(dedupeKey)
+
+                            let desc = ResolutionClassifier.classify(
+                                modeNumber: modeNum,
+                                pixelWidth: pixelW,
+                                pixelHeight: pixelH,
+                                pointWidth: pointW,
+                                pointHeight: pointH,
+                                refreshRate: hz > 0 ? hz : 60.0,
+                                nativePixelWidth: nativePixelWidth,
+                                nativePixelHeight: nativePixelHeight,
+                                isCurrent: isCurrent
+                            )
+                            descriptors.append(desc)
+                        }
+                    }
+                }
+
+                if !descriptors.isEmpty {
+                    // Sort descending by pointWidth, pointHeight, refreshRate
+                    descriptors.sort { a, b in
+                        if a.pointWidth != b.pointWidth { return a.pointWidth > b.pointWidth }
+                        if a.pointHeight != b.pointHeight { return a.pointHeight > b.pointHeight }
+                        return a.refreshRate > b.refreshRate
+                    }
+                    return descriptors
+                }
+            }
+        }
+
+        // Fallback path: CGDisplayCopyAllDisplayModes with duplicate modes enabled
+        let options = [kCGDisplayShowDuplicateLowResolutionModes: kCFBooleanTrue] as CFDictionary
+        guard let modeList = (CGDisplayCopyAllDisplayModes(displayID, options) as? [CGDisplayMode]) ??
+                             (CGDisplayCopyAllDisplayModes(displayID, nil) as? [CGDisplayMode]) else {
             return []
         }
 
         let currentMode = CGDisplayCopyDisplayMode(displayID)
-        let currentModeNumber = getCurrentMode(displayID: displayID) ?? -1
-
-        // Determine native panel dimensions
-        let nativePixelWidth = CGDisplayPixelsWide(displayID)
-        let nativePixelHeight = CGDisplayPixelsHigh(displayID)
 
         var descriptors: [DisplayResolutionDescriptor] = []
 
