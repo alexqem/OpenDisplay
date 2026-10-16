@@ -45,9 +45,9 @@ public struct DisplayCardStatusBadgeRow: View {
                 .help("Toggle camera notch black-out overlay")
             }
 
-            // XDR Overdrive Badge
-            if item.isBuiltin && item.capabilities.supportsXDR {
-                AtlasBadge(item.isXDROverdriveEnabled ? "XDR Boost" : "XDR Normal", style: item.isXDROverdriveEnabled ? .brand : .muted)
+            // XDR Overdrive Badge (when boosted)
+            if item.isXDROverdriveEnabled {
+                AtlasBadge("XDR Boost", style: .brand)
             }
 
             Spacer()
