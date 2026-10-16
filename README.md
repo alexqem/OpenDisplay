@@ -61,46 +61,7 @@ OpenDisplay provides complete, fine-grained control over external and built-in d
 4. **Dynamic Private API Binding:** Private macOS frameworks (`CoreDisplay`, `SkyLight`, `IOKit`, `DisplayServices`, `CoreBrightness`) are resolved at runtime via dynamic wrappers (`DynamicLibrary` and `DynamicObjCClass`) ensuring stability across macOS updates.
 5. **Completely Free & Open Source:** Clean-room implementation, no tracking, no telemetry, no paid tiers, zero open ports.
 
----
-
-## Project Structure & Architecture
-
-OpenDisplay is structured into modular Swift targets following strict **Single Responsibility Principle (SRP)**, **KISS**, and **DRY** directives:
-
-```
-OpenDisplay/
-├── Package.swift                          # Swift 5.9 SPM Manifest (.macOS(.v12))
-├── Sources/
-│   ├── OpenDisplayApp/                    # macOS Menu Bar Application Target
-│   │   └── main.swift                     # NSApplication entrypoint & MenuBarController host
-│   ├── OpenDisplayCLI/                    # Standalone CLI Executable Target
-│   │   └── main.swift                     # CLI entrypoint routing commands to Dispatcher
-│   └── OpenDisplayCore/                   # Core Framework Target
-│       ├── Constants/                     # DDCConstants, DisplayConstants, ColorConstants, AppLogger (1MB ring buffer)
-│       ├── DynamicBridge/                 # DynamicLibrary (dlopen/dlsym), DynamicObjCClass (NSClassFromString)
-│       ├── Hardware/                      # IOAVServiceMatcher, IOAVServiceDDC, AppleDisplayServicesBridge, DisplayInventory
-│       ├── Color/                         # EDIDParser, RGBForcingEngine, ColorDepthController, ColorProfileController
-│       ├── VirtualDisplay/                # VirtualDisplayController, SkyLightModeEngine, ResolutionClassifier,
-│       │                                  # DisplayGroupManager (Master-Slave Sync), DisplayPresetManager
-│       ├── Luminance/                     # GammaDimmingEngine, XDROverdriveEngine, NightShiftTrueToneBridge, AmbientSync
-│       ├── Streaming/                     # PipCaptureEngine (ScreenCaptureKit), PipStreamManager, PipWindowPanel
-│       ├── Automation/                    # OpenDisplayCLI, DisplayCommandDispatcher (Single Source of Truth), LaunchAtLogin
-│       └── UI/                            # Swiss Neo-Brutalist (Atlas/TypeUI) UI Sub-Bundle
-│           ├── DisplayCardView.swift      # Top-level coordinator card view (< 55 lines)
-│           ├── DisplayCardHeaderView.swift# Icon, display name, dynamic badges, numeric ID
-│           ├── DisplayCardStatusBadgeRow.swift # Hardware protocol capabilities (DDC, HDMI, 10-Bit, CEC)
-│           ├── DisplayLuminanceControlView.swift # Brightness slider, steppers, direct % input, XDR
-│           ├── DisplayAudioControlView.swift # DDC volume slider, mute toggle
-│           ├── DisplayResolutionModePickerView.swift # Categorized HiDPI/Resolution mode picker
-│           ├── DisplayAdvancedControlsDrawerView.swift # Progressive disclosure hardware & sync drawer
-│           ├── WorkspaceStore.swift       # Central reactive state store (< 240 lines)
-│           ├── WorkspaceStore+Presets.swift # JSON preset snapshots & import/export
-│           ├── WorkspaceStore+Features.swift # Dummy displays, system toggles, sync groups
-│           ├── AtlasTheme.swift           # Design tokens, dimensions, adaptive colors
-│           ├── AtlasComponents.swift      # Sharp zero-radius Neo-Brutalist UI primitives
-│           └── MenuBarController.swift    # Status bar item & transient SwiftUI popover host
-└── Tests/OpenDisplayTests/                # 20 Test Suites (Phases 1-20, 100% offline pure logic testability)
-```
+For detailed subsystem architecture, file-by-file breakdown, dependency graphs, and test suite mapping, see **[PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)**.
 
 ---
 

@@ -26,15 +26,6 @@ final class Phase8Tests: XCTestCase {
         item.brightness = 0.5
         XCTAssertEqual(item.brightness, 0.5)
 
-        // Test AtlasTheme tokens and typography scale
-        XCTAssertEqual(AtlasTheme.zeroRadius, 0.0)
-        XCTAssertEqual(AtlasTheme.borderWidth, 1.0)
-        XCTAssertEqual(AtlasTheme.popoverWidth, 400.0)
-        XCTAssertEqual(AtlasTheme.maxScrollHeight, 400.0)
-        XCTAssertEqual(AtlasTheme.pickerWidth, 120.0)
-        XCTAssertEqual(AtlasTheme.fontHeadline, 16.0)
-        XCTAssertEqual(AtlasTheme.fontCaptionSmall, 9.0)
-
         // Verify state mutation on DisplayItemModel triggers published update
         item.isForceRGBActive.toggle()
         XCTAssertTrue(item.isForceRGBActive)

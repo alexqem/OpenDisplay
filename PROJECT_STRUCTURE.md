@@ -24,9 +24,9 @@ OpenDisplay/
 │   │   └── IOAVServiceMatcher.swift                   # 8-level IORegistry hierarchy search for EDID
 │   ├── Color/                                         # ColorSync, EDID manipulation & HDR/10-bit modes
 │   │   ├── ColorDepthController.swift                 # SkyLight 10-bit (ARGB2101010) & HDR mode toggles
-│   │   ├── ColorProfileController.swift               # ColorSync ICC profile search & assignment
+│   │   ├── ColorProfileController.swift               # ColorSync ICC profile search, header validation & assignment
 │   │   ├── EDIDParser.swift                           # Pure 128-byte EDID block decoder & checksum validator
-│   │   └── RGBForcingEngine.swift                     # Live virtual EDID patching (Force RGB 4:4:4)
+│   │   └── RGBForcingEngine.swift                     # Hardware CADisplay connection mode switcher & IOMobileFramebuffer remap
 │   ├── Luminance/                                     # Brightness curves, gamma LUT & Night Shift
 │   │   ├── AmbientBrightnessSyncEngine.swift          # CoreDisplay auto-brightness polling & scaling
 │   │   ├── GammaDimmingEngine.swift                   # Software Gamma LUT fallbacks for non-DDC panels
@@ -35,10 +35,12 @@ OpenDisplay/
 │   │   └── XDROverdriveEngine.swift                   # EDR/XDR 1600 nits headroom calculator
 │   ├── VirtualDisplay/                                # Software dummy screens & multi-display logic
 │   │   ├── DisplayArrangementController.swift         # Display coordinates (origin X/Y) & main display swap
+│   │   ├── DisplayGroupManager.swift                  # Multi-monitor Master-Slave linking & sync
 │   │   ├── DisplayMirrorController.swift              # Hardware/software mirror pairing
 │   │   ├── DisplayPowerStateController.swift          # Display blanking, sleep & orientation (0/90/180/270)
 │   │   ├── DisplayPresetManager.swift                 # JSON snapshot serializer & preset bank
-│   │   ├── SkyLightModeEngine.swift                   # Display modes, VRR, ProMotion 120Hz detection
+│   │   ├── ResolutionClassifier.swift                 # HiDPI vs Native vs Standard mode classification
+│   │   ├── SkyLightModeEngine.swift                   # Display modes, refresh rates, VRR, ProMotion 120Hz detection
 │   │   ├── VirtualDisplayController.swift             # CoreDisplay CGVirtualDisplay driver
 │   │   └── VirtualDisplayManager.swift                # Thread-safe lifecycle registry of live virtual screens
 │   ├── Streaming/                                     # Picture-in-Picture display projection
@@ -50,22 +52,32 @@ OpenDisplay/
 │   │   ├── DisplayCommandDispatcher.swift             # SINGLE SOURCE OF TRUTH for executing actions
 │   │   ├── LaunchAtLoginController.swift              # macOS 13+ SMAppService login item manager
 │   │   └── OpenDisplayCLI.swift                       # Pure argument parser (get, set, rotate, etc.)
-│   ├── UI/                                            # Swiss Neo-Brutalist Interface (Atlas/TypeUI)
+│   ├── UI/                                            # Native macOS Translucent Glassmorphism Interface
 │   │   ├── AppMenuView.swift                          # Root Popover View (Header, ScrollView, Footer)
-│   │   ├── AtlasComponents.swift                      # Reusable Atlas primitives (Eyebrow, Badge, Grid)
-│   │   ├── AtlasTheme.swift                           # Adaptive Design Tokens (Dark / Light Neo-Brutalist)
-│   │   ├── DisplayCardView.swift                      # Per-display interactive card (Sliders, Actions)
+│   │   ├── AtlasComponents.swift                      # Reusable UI primitives (Eyebrow, Badge, Divider, Toggles)
+│   │   ├── AtlasTheme.swift                           # Adaptive Design Tokens (Dynamic NSColor, Material Glass)
+│   │   ├── DisplayCardView.swift                      # Per-display interactive card coordinator
+│   │   ├── DisplayCardHeaderView.swift                # Icon, name, active badges, soft disconnect toggle
+│   │   ├── DisplayCardStatusBadgeRow.swift            # Protocol capability pills (DDC, 10-Bit, Retina)
+│   │   ├── DisplayLuminanceControlView.swift          # Brightness slider, steppers, direct % input, XDR
+│   │   ├── DisplayAudioControlView.swift              # DDC volume slider, mute toggle
+│   │   ├── DisplayResolutionModePickerView.swift      # Separate Resolution and Refresh Rate dropdown selectors
+│   │   ├── DisplayAdvancedControlsDrawerView.swift    # Flat progressive disclosure settings drawer
+│   │   ├── DisplayColorModeSectionView.swift          # Hardware RGB Full / YCbCr Limited and appearance presets
 │   │   ├── DisplayItemModel.swift                     # Observable reactive model of a single display
 │   │   ├── MediaKeysListener.swift                    # NX_SYSDEFINED & CGEvent media key hook
 │   │   ├── MenuBarController.swift                    # NSStatusItem & NSPopover lifecycle host
 │   │   ├── NativeOSDController.swift                  # Chiclet HUD overlay via com.apple.OSDUIHelper
 │   │   ├── NotchOverlayManager.swift                  # Blackout overlay panel for MacBook notches
 │   │   ├── PopoverSections.swift                      # Presets, Virtual Display Generator & System toggles
-│   │   └── WorkspaceStore.swift                       # Central @MainActor state store with DDC throttling
+│   │   ├── WorkspaceStore.swift                       # Central @MainActor state store with DDC throttling
+│   │   ├── WorkspaceStore+Presets.swift               # Preset snapshots and import/export extensions
+│   │   └── WorkspaceStore+Features.swift              # Virtual displays and system feature triggers
 │   └── AppFeatureManager.swift                        # Permanent free-feature state engine (100% unlocked)
-└── Tests/OpenDisplayTests/                            # 14-Phase Offline & Online Unit Test Suites
+└── Tests/OpenDisplayTests/                            # Complete Offline & Logic Unit Test Suites (Phases 1-21)
     ├── Phase1Tests.swift ... Phase13Tests.swift       # Protocols, math, EDID, CLI, DDC, presets
-    └── Phase14Tests.swift                             # UI tokens, inventory, virtual registry, debouncing
+    ├── Phase14Tests.swift ... Phase18Tests.swift      # UI tokens, input sources, resolution classifier
+    └── Phase19Tests.swift ... Phase21Tests.swift      # Display groups, AppLogger, PiP and Notch overlays
 ```
 
 ---

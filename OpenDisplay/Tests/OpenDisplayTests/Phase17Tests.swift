@@ -36,6 +36,7 @@ final class Phase17Tests: XCTestCase {
         XCTAssertEqual(mode1.tier, .recommendedHiDPI)
         XCTAssertEqual(mode1.scaleFactor, 2.0)
         XCTAssertEqual(mode1.userLabel, "1920 × 1080 (HiDPI) (Native) · 60Hz")
+        XCTAssertEqual(mode1.resolutionOnlyLabel, "1920 × 1080 (HiDPI) (Native)")
 
         // 2. Scaled HiDPI "Looks like 2560x1440" on 4K (pixel buffer 5120x2880 or downscaled) -> Recommended
         let mode2 = ResolutionClassifier.classify(
@@ -55,6 +56,7 @@ final class Phase17Tests: XCTestCase {
         XCTAssertEqual(mode2.tier, .recommendedHiDPI)
         XCTAssertEqual(mode2.scaleFactor, 1.5)
         XCTAssertEqual(mode2.userLabel, "2560 × 1440 (HiDPI) (Native) · 144Hz")
+        XCTAssertEqual(mode2.resolutionOnlyLabel, "2560 × 1440 (HiDPI) (Native)")
 
         // 3. Stretched non-native aspect mode (1920x1200 on 16:9 panel) -> Not recommended
         let mode3 = ResolutionClassifier.classify(

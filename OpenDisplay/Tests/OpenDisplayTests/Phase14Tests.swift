@@ -59,15 +59,15 @@ final class Phase14Tests: XCTestCase {
 
     func testAtlasThemeExtendedTokens() {
         #if os(macOS) && arch(arm64)
-        XCTAssertEqual(AtlasTheme.popoverWidth, 400.0)
-        XCTAssertEqual(AtlasTheme.popoverHeight, 660.0)
-        XCTAssertEqual(AtlasTheme.maxScrollHeight, 400.0)
+        XCTAssertEqual(AtlasTheme.popoverWidth, 360.0)
+        XCTAssertEqual(AtlasTheme.popoverHeight, 580.0)
+        XCTAssertEqual(AtlasTheme.maxScrollHeight, 500.0)
         XCTAssertEqual(AtlasTheme.pickerNarrowWidth, 72.0)
-        XCTAssertEqual(AtlasTheme.sectionSpacing, 16.0)
+        XCTAssertEqual(AtlasTheme.sectionSpacing, 12.0)
         XCTAssertEqual(AtlasTheme.blueprintGridSpacing, 18.0)
-        XCTAssertEqual(AtlasTheme.iconButtonSide, 22.0)
+        XCTAssertEqual(AtlasTheme.iconButtonSide, 24.0)
         XCTAssertEqual(AtlasTheme.pillCornerRadius, 9999.0)
-        XCTAssertEqual(AtlasTheme.percentLabelWidth, 34.0)
+        XCTAssertEqual(AtlasTheme.percentLabelWidth, 36.0)
         #endif
     }
 
