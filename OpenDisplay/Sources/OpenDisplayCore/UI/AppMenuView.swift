@@ -131,12 +131,12 @@ public struct AppMenuView: View {
         HStack(spacing: 8) {
             if let tip = store.activeTooltipText {
                 HStack(spacing: 5) {
-                    Image(systemName: "info.circle")
-                        .font(.system(size: 10, weight: .medium))
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(Color.accentColor)
                     Text(tip)
-                        .font(.system(size: 10, weight: .regular))
-                        .foregroundStyle(Color.secondary)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(Color.primary)
                         .lineLimit(1)
                 }
                 .transition(.opacity)

@@ -22,18 +22,19 @@ public struct DisplayResolutionModePickerView: View {
                 if item.availableResolutions.isEmpty {
                     Text("Probing modes...").tag("" as String?)
                 } else {
-                    if !item.recommendedResolutions.isEmpty {
-                        Section(header: Text("Modes matching default filter:")) {
-                            ForEach(item.recommendedResolutions) { mode in
+                    // BetterDisplay Parity: Prioritize HiDPI section, then Native & Low Resolution (1x)
+                    if !item.hiDPIResolutions.isEmpty {
+                        Section(header: Text("HiDPI Scaled Resolutions")) {
+                            ForEach(item.hiDPIResolutions) { mode in
                                 Text(mode.userLabel).tag(mode.id as String?)
                             }
                         }
                     }
 
-                    if !item.otherResolutions.isEmpty {
-                        Section(header: Text("Other Modes")) {
-                            ForEach(item.otherResolutions) { mode in
-                                Text("\(mode.userLabel) (\(mode.tier.rawValue))").tag(mode.id as String?)
+                    if !item.nativeAndStandardResolutions.isEmpty {
+                        Section(header: Text("Standard & Native Modes")) {
+                            ForEach(item.nativeAndStandardResolutions) { mode in
+                                Text(mode.userLabel).tag(mode.id as String?)
                             }
                         }
                     }

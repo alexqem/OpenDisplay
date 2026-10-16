@@ -211,9 +211,25 @@ public final class WorkspaceStore: ObservableObject {
 
     public func setForceRGB(_ item: DisplayItemModel, enabled: Bool) {
         if enabled {
+            _ = RGBForcingEngine.setColorRemapMode(0)
+            try? GammaDimmingEngine.restoreGamma(displayID: item.id)
             item.isForceRGBActive = true
             activeTooltipText = "Active: 8-bit SDR RGB Full Range (Native)"
         } else {
+            // Limited Range conversion: compress RGB [0..255] to broadcast video range [16..235]
+            let size = GammaTableConstants.standardTableSize
+            let maxIndex = Float(size - 1)
+            var table = [Float](repeating: 0, count: Int(size))
+            let minVal: Float = 16.0 / 255.0
+            let maxVal: Float = 235.0 / 255.0
+            for i in 0..<Int(size) {
+                let norm = Float(i) / maxIndex
+                table[i] = minVal + norm * (maxVal - minVal)
+            }
+            var r = table
+            var g = table
+            var b = table
+            _ = CGSetDisplayTransferByTable(item.id, size, &r, &g, &b)
             item.isForceRGBActive = false
             activeTooltipText = "Active: 8-bit SDR YCbCr 4:4:4 Limited Range"
         }

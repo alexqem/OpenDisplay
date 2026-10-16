@@ -18,7 +18,7 @@ public final class SkyLightModeEngine: @unchecked Sendable {
     private typealias CGSConfigureDisplayModeFunc = @convention(c) (CGDisplayConfigRef, CGDirectDisplayID, Int32) -> CGError
     private typealias SLSIsDisplayModeVRRFunc = @convention(c) (CGDirectDisplayID, Int32) -> Bool
     private typealias SLSIsDisplayModeProMotionFunc = @convention(c) (CGDirectDisplayID, Int32) -> Bool
-    private typealias SLSSetDisplayRotationFunc = @convention(c) (CGDisplayConfigRef, CGDirectDisplayID, Int32) -> CGError
+    private typealias SLSSetDisplayRotationFunc = @convention(c) (CGDirectDisplayID, Int32) -> CGError
 
     private let library: DynamicLibrary?
     private let getCurrentModeFn: CGSGetCurrentDisplayModeFunc?
@@ -89,22 +89,11 @@ public final class SkyLightModeEngine: @unchecked Sendable {
         }
     }
 
-    /// Rotate display (0, 90, 180, 270 degrees)
+    /// Rotate display (0, 90, 180, 270 degrees) directly via SLSSetDisplayRotation
     public func setRotation(displayID: CGDirectDisplayID, degrees: Int32) -> Bool {
         guard let rotateFn = setRotationFn else { return false }
-
-        var configRef: CGDisplayConfigRef?
-        CGBeginDisplayConfiguration(&configRef)
-        guard let config = configRef else { return false }
-
-        let status = rotateFn(config, displayID, degrees)
-        if status == .success {
-            CGCompleteDisplayConfiguration(config, .permanently)
-            return true
-        } else {
-            CGCancelDisplayConfiguration(config)
-            return false
-        }
+        let status = rotateFn(displayID, degrees)
+        return status == .success
     }
 
     /// Enumerate all available display modes with classification and recommendation metadata

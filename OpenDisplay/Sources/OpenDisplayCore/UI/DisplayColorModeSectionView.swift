@@ -112,9 +112,10 @@ public struct DisplayColorModeSectionView: View {
             .buttonStyle(.plain)
 
             HStack(spacing: 4) {
-                Image(systemName: "shield.lefthalf.filled")
+                Image(systemName: "checkmark.shield.fill")
                     .font(.system(size: 9))
-                Text("Configuration Protection makes color mode changes persistent.")
+                    .foregroundStyle(Color.accentColor)
+                Text("Color mode configuration is permanently unlocked and auto-persisted.")
                     .font(.system(size: 10))
             }
             .foregroundStyle(Color.secondary)

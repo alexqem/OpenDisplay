@@ -30,10 +30,14 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
     @Published public var inputSource: DDCInputSource?
     @Published public var availableResolutions: [DisplayResolutionDescriptor] = [] {
         didSet {
+            hiDPIResolutions = availableResolutions.filter { $0.isHiDPI }
+            nativeAndStandardResolutions = availableResolutions.filter { !$0.isHiDPI }
             recommendedResolutions = availableResolutions.filter { $0.isRecommended }
             otherResolutions = availableResolutions.filter { !$0.isRecommended }
         }
     }
+    @Published public private(set) var hiDPIResolutions: [DisplayResolutionDescriptor] = []
+    @Published public private(set) var nativeAndStandardResolutions: [DisplayResolutionDescriptor] = []
     @Published public private(set) var recommendedResolutions: [DisplayResolutionDescriptor] = []
     @Published public private(set) var otherResolutions: [DisplayResolutionDescriptor] = []
     @Published public var selectedResolutionId: String?
