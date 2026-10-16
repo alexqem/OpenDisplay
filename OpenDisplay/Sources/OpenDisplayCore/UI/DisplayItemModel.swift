@@ -21,6 +21,8 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
     @Published public var isForceRGBActive: Bool
     @Published public var is10BitActive: Bool
     @Published public var isHDREnabled: Bool
+    @Published public var isNotchOverlayActive: Bool
+    @Published public var hasPhysicalNotch: Bool
     @Published public var isMirrored: Bool
     @Published public var isDisconnected: Bool
     @Published public var rotation: DisplayRotationAngle = .standard
@@ -75,6 +77,8 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
         self.pixelWidth = pixelWidth
         self.pixelHeight = pixelHeight
         self.isHDREnabled = false
+        self.isNotchOverlayActive = false
+        self.hasPhysicalNotch = false
         self.isMirrored = false
         self.isDisconnected = false
         self.colorProfileName = nil

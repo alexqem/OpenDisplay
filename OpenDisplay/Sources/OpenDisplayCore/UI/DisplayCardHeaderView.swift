@@ -43,6 +43,16 @@ public struct DisplayCardHeaderView: View {
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(Color.secondary)
             }
+
+            // Power / Soft Disconnect Toggle (BetterDisplay-style header toggle)
+            Toggle("", isOn: Binding(
+                get: { !item.isDisconnected },
+                set: { _ in WorkspaceStore.shared.togglePowerConnection(item) }
+            ))
+            .toggleStyle(.switch)
+            .controlSize(.mini)
+            .labelsHidden()
+            .help(item.isDisconnected ? "Connect display" : "Disconnect / Sleep display")
         }
     }
 

@@ -250,6 +250,26 @@ public final class DisplayCommandDispatcher: @unchecked Sendable {
         return true
     }
 
+    /// Start floating Picture-in-Picture streaming for an application window
+    public func startWindowPip(windowID: CGWindowID) -> Bool {
+        guard #available(macOS 12.3, *) else { return false }
+        guard !PipStreamManager.shared.isActive else { return false }
+        PipStreamManager.shared.start(windowID: windowID)
+        return true
+    }
+
+    /// Set PiP panel opacity
+    public func setPipOpacity(_ opacity: CGFloat) {
+        guard #available(macOS 12.3, *) else { return }
+        PipStreamManager.shared.setOpacity(opacity)
+    }
+
+    /// Set PiP click-through pass-through
+    public func setPipClickThrough(_ enabled: Bool) {
+        guard #available(macOS 12.3, *) else { return }
+        PipStreamManager.shared.setClickThrough(enabled)
+    }
+
     /// Stop the active Picture-in-Picture stream
     public func stopPip() {
         guard #available(macOS 12.3, *) else { return }

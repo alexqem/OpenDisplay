@@ -48,9 +48,26 @@ public final class NotchOverlayManager {
         )
     }
 
+    /// Check if the display physically has a camera notch in safeAreaInsets
+    public static func hasPhysicalNotch(for displayID: CGDirectDisplayID) -> Bool {
+        guard let screen = findScreen(for: displayID) else { return false }
+        return screen.safeAreaInsets.top > 0
+    }
+
     /// Check if display is currently covered with an overlay
     public func isOverlayActive(for displayID: CGDirectDisplayID) -> Bool {
         return activeOverlays[displayID] != nil
+    }
+
+    /// Toggle display notch overlay (shows black bar across menu bar / top safe area)
+    public func toggleNotchOverlay(for displayID: CGDirectDisplayID) -> Bool {
+        if isOverlayActive(for: displayID) {
+            hideOverlay(for: displayID)
+            return false
+        } else {
+            showOverlay(for: displayID)
+            return isOverlayActive(for: displayID)
+        }
     }
 
     /// Display a notch black-out overlay bar across the top safe area

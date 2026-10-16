@@ -37,6 +37,9 @@ public final class WorkspaceStore: ObservableObject {
     @Published public var isLaunchAtLoginOn: Bool = false
     @Published public var isPipOn: Bool = false
     @Published public var pipDisplayID: CGDirectDisplayID?
+    @Published public var pipWindowID: CGWindowID?
+    @Published public var pipOpacity: Double = 1.0
+    @Published public var isPipClickThrough: Bool = false
     @Published public var newPresetDraftName: String = ""
     @Published public var activeTooltipText: String?
 
@@ -71,6 +74,8 @@ public final class WorkspaceStore: ObservableObject {
             let model = displays.first(where: { $0.id == info.id }) ?? makeModel(from: info)
             model.isHDREnabled = dispatcher.isHDREnabled(displayID: info.id)
             model.is10BitActive = dispatcher.is10BitColorActive(displayID: info.id)
+            model.hasPhysicalNotch = NotchOverlayManager.hasPhysicalNotch(for: info.id)
+            model.isNotchOverlayActive = NotchOverlayManager.shared.isOverlayActive(for: info.id)
             model.isMirrored = DisplayMirrorController.isMirroring(info.id)
             model.isDisconnected = DisplayPowerStateController.shared.isDisconnected(displayID: info.id)
             model.capabilities = DisplayInventory.probeCapabilities(for: info.id)

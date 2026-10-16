@@ -96,12 +96,18 @@ extension WorkspaceStore {
         isLaunchAtLoginOn = LaunchAtLoginController.shared.toggle()
     }
 
+    public func toggleNotch(for item: DisplayItemModel) {
+        let active = NotchOverlayManager.shared.toggleNotchOverlay(for: item.id)
+        item.isNotchOverlayActive = active
+    }
+
     public func togglePip(for displayID: CGDirectDisplayID) {
         if isPipOn {
             let previousID = pipDisplayID
             dispatcher.stopPip()
             isPipOn = false
             pipDisplayID = nil
+            pipWindowID = nil
             // If user clicked the same display that was active, treat as pure toggle off
             if previousID == displayID {
                 return
@@ -110,7 +116,40 @@ extension WorkspaceStore {
         if !dispatcher.isVirtual(displayID: displayID), dispatcher.startPip(displayID: displayID) {
             isPipOn = true
             pipDisplayID = displayID
+            pipWindowID = nil
+            dispatcher.setPipOpacity(CGFloat(pipOpacity))
+            dispatcher.setPipClickThrough(isPipClickThrough)
         }
+    }
+
+    public func toggleWindowPip(for windowID: CGWindowID) {
+        if isPipOn {
+            let previousWinID = pipWindowID
+            dispatcher.stopPip()
+            isPipOn = false
+            pipDisplayID = nil
+            pipWindowID = nil
+            if previousWinID == windowID {
+                return
+            }
+        }
+        if dispatcher.startWindowPip(windowID: windowID) {
+            isPipOn = true
+            pipWindowID = windowID
+            pipDisplayID = nil
+            dispatcher.setPipOpacity(CGFloat(pipOpacity))
+            dispatcher.setPipClickThrough(isPipClickThrough)
+        }
+    }
+
+    public func setPipOpacityLevel(_ value: Double) {
+        pipOpacity = max(0.1, min(1.0, value))
+        dispatcher.setPipOpacity(CGFloat(pipOpacity))
+    }
+
+    public func togglePipClickThrough() {
+        isPipClickThrough.toggle()
+        dispatcher.setPipClickThrough(isPipClickThrough)
     }
 
     // MARK: - Display Sync Groups

@@ -4,6 +4,19 @@ import ScreenCaptureKit
 import CoreMedia
 import CoreVideo
 
+/// Lightweight descriptor for shareable window capture
+public struct PipWindowTarget: Identifiable, Sendable {
+    public let id: CGWindowID
+    public let title: String
+    public let appName: String
+
+    public init(id: CGWindowID, title: String, appName: String) {
+        self.id = id
+        self.title = title
+        self.appName = appName
+    }
+}
+
 /// Observational state of the PiP capture stream
 public enum PipStreamState: String, Sendable {
     case idle
@@ -51,6 +64,16 @@ public final class PipCaptureEngine: NSObject, SCStreamOutput, @unchecked Sendab
     /// Start streaming a physical or virtual display
     public func startCapture(display: SCDisplay, options: PipStreamOptions = PipStreamOptions()) async throws {
         let filter = SCContentFilter(display: display, excludingWindows: [])
+        try await configureAndStart(filter: filter, options: options)
+    }
+
+    /// Start streaming a specific application window
+    public func startCapture(window: SCWindow, options: PipStreamOptions = PipStreamOptions()) async throws {
+        let filter = SCContentFilter(desktopIndependentWindow: window)
+        try await configureAndStart(filter: filter, options: options)
+    }
+
+    private func configureAndStart(filter: SCContentFilter, options: PipStreamOptions) async throws {
         let config = SCStreamConfiguration()
         config.width = options.width
         config.height = options.height

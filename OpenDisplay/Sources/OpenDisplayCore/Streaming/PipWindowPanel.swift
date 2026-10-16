@@ -27,5 +27,10 @@ public final class PipWindowPanel: NSPanel {
     public func setOpacity(_ opacity: CGFloat) {
         self.alphaValue = max(0.1, min(1.0, opacity))
     }
+
+    /// Set click-through behavior (pass mouse events to windows beneath)
+    public func setClickThrough(_ enabled: Bool) {
+        self.ignoresMouseEvents = enabled
+    }
 }
 #endif
