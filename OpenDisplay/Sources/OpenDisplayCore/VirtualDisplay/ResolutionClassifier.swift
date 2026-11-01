@@ -166,6 +166,33 @@ public enum ResolutionClassifier {
         )
     }
 
+    // MARK: - Resolution Deduplication (BetterDisplay separate Resolution & Refresh Rate pickers parity)
+
+    /// Deduplicate modes for the Resolution dropdown: exactly one item per (pointWidth, pointHeight, isHiDPI).
+    /// Keeps the current mode if one matches, otherwise the mode with the highest refresh rate.
+    public static func deduplicatedResolutions(from modes: [DisplayResolutionDescriptor]) -> [DisplayResolutionDescriptor] {
+        var groups: [String: [DisplayResolutionDescriptor]] = [:]
+        var order: [String] = []
+
+        for mode in modes {
+            let key = "\(mode.pointWidth)x\(mode.pointHeight)_\(mode.isHiDPI ? "hidpi" : "lodpi")"
+            if groups[key] == nil {
+                order.append(key)
+                groups[key] = [mode]
+            } else {
+                groups[key]?.append(mode)
+            }
+        }
+
+        return order.compactMap { key in
+            guard let group = groups[key], !group.isEmpty else { return nil }
+            if let current = group.first(where: { $0.isCurrent }) {
+                return current
+            }
+            return group.max(by: { $0.refreshRate < $1.refreshRate })
+        }
+    }
+
     // MARK: - HiDPI Toggle Mode Selection (BetterDisplay "Hi Resolution" parity)
 
     /// Pick the HiDPI mode with the largest pixel buffer (cast displays: 960x540@2x = 1080p stream)

@@ -83,7 +83,14 @@ public struct DisplayResolutionModePickerView: View {
     private var resolutionBinding: Binding<String?> {
         Binding(
             get: {
-                item.selectedResolutionId ?? item.availableResolutions.first(where: { $0.isCurrent })?.id ?? item.availableResolutions.first?.id
+                if let selected = item.selectedResolutionId,
+                   let current = item.availableResolutions.first(where: { $0.id == selected }) {
+                    return uniqueListMatching(current)?.id ?? selected
+                }
+                if let current = item.availableResolutions.first(where: { $0.isCurrent }) {
+                    return uniqueListMatching(current)?.id ?? current.id
+                }
+                return item.hiDPIResolutions.first?.id ?? item.nativeAndStandardResolutions.first?.id
             },
             set: { newId in
                 guard let id = newId, let mode = item.availableResolutions.first(where: { $0.id == id }) else {
@@ -92,6 +99,11 @@ public struct DisplayResolutionModePickerView: View {
                 store.setResolution(item, mode: mode)
             }
         )
+    }
+
+    private func uniqueListMatching(_ mode: DisplayResolutionDescriptor) -> DisplayResolutionDescriptor? {
+        let pool = mode.isHiDPI ? item.hiDPIResolutions : item.nativeAndStandardResolutions
+        return pool.first(where: { $0.pointWidth == mode.pointWidth && $0.pointHeight == mode.pointHeight })
     }
 
     private var refreshRateBinding: Binding<Double> {

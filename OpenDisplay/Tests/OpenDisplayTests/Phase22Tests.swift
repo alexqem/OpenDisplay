@@ -177,4 +177,40 @@ final class Phase22Tests: XCTestCase {
             onlineDisplayUUIDs: online
         ))
     }
+
+    // MARK: - Resolution Deduplication
+
+    func testDeduplicatedResolutionsRemovesRefreshRateDuplicates() {
+        let m120 = DisplayResolutionDescriptor(
+            modeNumber: 0, pixelWidth: 3024, pixelHeight: 1964,
+            pointWidth: 1512, pointHeight: 982, refreshRate: 120.0,
+            isCurrent: false, isNative: false, isRecommended: true,
+            tier: .recommendedHiDPI, aspectRatioString: "16:10"
+        )
+        let m60 = DisplayResolutionDescriptor(
+            modeNumber: 1, pixelWidth: 3024, pixelHeight: 1964,
+            pointWidth: 1512, pointHeight: 982, refreshRate: 60.0,
+            isCurrent: true, isNative: false, isRecommended: true,
+            tier: .recommendedHiDPI, aspectRatioString: "16:10"
+        )
+        let m59 = DisplayResolutionDescriptor(
+            modeNumber: 2, pixelWidth: 3024, pixelHeight: 1964,
+            pointWidth: 1512, pointHeight: 982, refreshRate: 59.0,
+            isCurrent: false, isNative: false, isRecommended: true,
+            tier: .recommendedHiDPI, aspectRatioString: "16:10"
+        )
+        let other = DisplayResolutionDescriptor(
+            modeNumber: 3, pixelWidth: 1920, pixelHeight: 1080,
+            pointWidth: 1920, pointHeight: 1080, refreshRate: 60.0,
+            isCurrent: false, isNative: false, isRecommended: false,
+            tier: .standard1x, aspectRatioString: "16:9"
+        )
+
+        let unique = ResolutionClassifier.deduplicatedResolutions(from: [m120, m60, m59, other])
+        XCTAssertEqual(unique.count, 2)
+        // Must preserve the current mode (m60) for 1512x982
+        let matched = unique.first(where: { $0.pointWidth == 1512 && $0.pointHeight == 982 })
+        XCTAssertEqual(matched?.modeNumber, 1)
+        XCTAssertEqual(matched?.refreshRate, 60.0)
+    }
 }
