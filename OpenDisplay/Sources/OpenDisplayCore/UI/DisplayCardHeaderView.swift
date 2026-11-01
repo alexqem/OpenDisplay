@@ -54,6 +54,10 @@ public struct DisplayCardHeaderView: View {
                 Text("Built-in")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(Color.secondary)
+            } else if item.currentRefreshRate > 0 {
+                Text("\(Int(item.currentRefreshRate.rounded()))Hz")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(Color.secondary)
             }
 
             // Power / Soft Disconnect Toggle (BetterDisplay-style header toggle)

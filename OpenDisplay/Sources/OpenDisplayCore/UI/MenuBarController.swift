@@ -30,6 +30,8 @@ public final class MenuBarController: NSObject {
         // When display resolution/geometry changes while the popover is visible,
         // NSPopover's window frame retains the old screen coordinates, causing it
         // to drift off-screen or above the menu bar. Reposition it cleanly.
+        let newHeight = AtlasTheme.adaptivePopoverHeight()
+        popover.contentSize = NSSize(width: AtlasTheme.popoverWidth, height: newHeight)
         popover.performClose(nil)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             guard let self = self, let btn = self.statusItem?.button else { return }
@@ -65,10 +67,11 @@ public final class MenuBarController: NSObject {
     }
 
     private func setupPopover() {
-        popover.contentSize = NSSize(width: AtlasTheme.popoverWidth, height: AtlasTheme.popoverHeight)
+        let height = AtlasTheme.adaptivePopoverHeight()
+        popover.contentSize = NSSize(width: AtlasTheme.popoverWidth, height: height)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(rootView: AppMenuView())
-        AppLogger.shared.log("MenuBarController popover configured")
+        AppLogger.shared.log("MenuBarController popover configured with adaptive height: \(height)")
     }
 
     @objc public func togglePopover() {

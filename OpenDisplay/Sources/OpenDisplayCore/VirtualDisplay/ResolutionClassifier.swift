@@ -193,7 +193,13 @@ public enum ResolutionClassifier {
         }
     }
 
-    // MARK: - HiDPI Toggle Mode Selection (BetterDisplay "Hi Resolution" parity)
+    /// Minimum point height to be considered a standard modern resolution without expanding low-res
+    public static let standardMinimumPointHeight: Int = 540
+
+    /// Returns true if the resolution is comfortable for modern desktop usage (>= 540p or current/native)
+    public static func isStandardResolution(_ mode: DisplayResolutionDescriptor) -> Bool {
+        return mode.isCurrent || mode.isNative || mode.pointHeight >= standardMinimumPointHeight
+    }
 
     /// Pick the HiDPI mode with the largest pixel buffer (cast displays: 960x540@2x = 1080p stream)
     public static func bestHiDPIMode(in modes: [DisplayResolutionDescriptor]) -> DisplayResolutionDescriptor? {

@@ -25,32 +25,61 @@ public struct DisplayResolutionModePickerView: View {
 
                 Spacer()
 
-                Picker("", selection: resolutionBinding) {
-                    if item.availableResolutions.isEmpty {
-                        Text("Probing modes...").tag("" as String?)
-                    } else {
-                        // BetterDisplay Parity: Prioritize HiDPI section, then Native & Standard Low-res (1x)
-                        if !item.hiDPIResolutions.isEmpty {
-                            Section(header: Text("HiDPI Scaled Resolutions")) {
-                                ForEach(item.hiDPIResolutions) { mode in
-                                    Text(mode.resolutionOnlyLabel).tag(mode.id as String?)
+                if item.isMirrored {
+                    Text("Managed by Master")
+                        .font(.system(size: AtlasTheme.fontCaptionSmall))
+                        .foregroundStyle(Color.secondary)
+                } else {
+                    Picker("", selection: resolutionBinding) {
+                        if item.availableResolutions.isEmpty {
+                            Text("Probing modes...").tag("" as String?)
+                        } else {
+                            // BetterDisplay Parity: Prioritize HiDPI section, then Native & Standard Low-res (1x)
+                            if !item.hiDPIResolutions.isEmpty {
+                                Section(header: Text("HiDPI Scaled Resolutions")) {
+                                    ForEach(item.hiDPIResolutions) { mode in
+                                        Text(mode.resolutionOnlyLabel).tag(mode.id as String?)
+                                    }
                                 }
                             }
-                        }
 
-                        if !item.nativeAndStandardResolutions.isEmpty {
-                            Section(header: Text("Standard & Native Modes")) {
-                                ForEach(item.nativeAndStandardResolutions) { mode in
-                                    Text(mode.resolutionOnlyLabel).tag(mode.id as String?)
+                            if !item.nativeAndStandardResolutions.isEmpty {
+                                Section(header: Text("Standard & Native Modes")) {
+                                    ForEach(item.nativeAndStandardResolutions) { mode in
+                                        Text(mode.resolutionOnlyLabel).tag(mode.id as String?)
+                                    }
+                                }
+                            }
+
+                            if item.showAllResolutions && !item.lowResLegacyResolutions.isEmpty {
+                                Section(header: Text("Legacy Low-Res Modes (<540p)")) {
+                                    ForEach(item.lowResLegacyResolutions) { mode in
+                                        Text(mode.resolutionOnlyLabel).tag(mode.id as String?)
+                                    }
                                 }
                             }
                         }
                     }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .controlSize(.small)
+                    .frame(maxWidth: 160)
                 }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .controlSize(.small)
-                .frame(maxWidth: 160)
+            }
+
+            // Quick toggle to show/hide legacy low-resolution modes (<540p)
+            if !item.isMirrored && !item.lowResLegacyResolutions.isEmpty {
+                HStack {
+                    Spacer()
+                    Button {
+                        item.showAllResolutions.toggle()
+                    } label: {
+                        Text(item.showAllResolutions ? "Hide low-res modes" : "Show all resolutions (\(item.lowResLegacyResolutions.count) low-res hidden)")
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundStyle(Color.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
 
             // 2. Refresh Rate Dropdown (Independent selection as in BetterDisplay Structure #2)
@@ -61,20 +90,26 @@ public struct DisplayResolutionModePickerView: View {
 
                 Spacer()
 
-                Picker("", selection: refreshRateBinding) {
-                    if item.availableRefreshRates.isEmpty {
-                        Text("\(Int(item.currentRefreshRate.rounded()))Hz").tag(item.currentRefreshRate)
-                    } else {
-                        ForEach(item.availableRefreshRates, id: \.self) { rate in
-                            let label = formatRate(rate)
-                            Text(label).tag(rate)
+                if item.isMirrored {
+                    Text("\(Int(item.currentRefreshRate.rounded()))Hz (Slave)")
+                        .font(.system(size: AtlasTheme.fontCaptionSmall))
+                        .foregroundStyle(Color.secondary)
+                } else {
+                    Picker("", selection: refreshRateBinding) {
+                        if item.availableRefreshRates.isEmpty {
+                            Text("\(Int(item.currentRefreshRate.rounded()))Hz").tag(item.currentRefreshRate)
+                        } else {
+                            ForEach(item.availableRefreshRates, id: \.self) { rate in
+                                let label = formatRate(rate)
+                                Text(label).tag(rate)
+                            }
                         }
                     }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .controlSize(.small)
+                    .frame(maxWidth: 160)
                 }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .controlSize(.small)
-                .frame(maxWidth: 160)
             }
         }
         .padding(.vertical, 2)

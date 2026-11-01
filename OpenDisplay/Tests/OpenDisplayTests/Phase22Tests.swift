@@ -213,4 +213,38 @@ final class Phase22Tests: XCTestCase {
         XCTAssertEqual(matched?.modeNumber, 1)
         XCTAssertEqual(matched?.refreshRate, 60.0)
     }
+
+    // MARK: - Standard Resolution Filtering & Adaptive Height
+
+    func testStandardResolutionThreshold() {
+        let lowRes = DisplayResolutionDescriptor(
+            modeNumber: 10, pixelWidth: 640, pixelHeight: 480,
+            pointWidth: 640, pointHeight: 480, refreshRate: 60.0,
+            isCurrent: false, isNative: false, isRecommended: false,
+            tier: .standard1x, aspectRatioString: "4:3"
+        )
+        let standard = DisplayResolutionDescriptor(
+            modeNumber: 11, pixelWidth: 1920, pixelHeight: 1080,
+            pointWidth: 1920, pointHeight: 1080, refreshRate: 60.0,
+            isCurrent: false, isNative: false, isRecommended: false,
+            tier: .standard1x, aspectRatioString: "16:9"
+        )
+        let currentLowRes = DisplayResolutionDescriptor(
+            modeNumber: 12, pixelWidth: 640, pixelHeight: 480,
+            pointWidth: 640, pointHeight: 480, refreshRate: 60.0,
+            isCurrent: true, isNative: false, isRecommended: false,
+            tier: .standard1x, aspectRatioString: "4:3"
+        )
+
+        XCTAssertFalse(ResolutionClassifier.isStandardResolution(lowRes))
+        XCTAssertTrue(ResolutionClassifier.isStandardResolution(standard))
+        // If user is currently running low res, it must not be hidden
+        XCTAssertTrue(ResolutionClassifier.isStandardResolution(currentLowRes))
+    }
+
+    func testAdaptivePopoverHeightNeverExceedsDefault() {
+        let height = AtlasTheme.adaptivePopoverHeight()
+        XCTAssertLessThanOrEqual(height, AtlasTheme.popoverHeight)
+        XCTAssertGreaterThanOrEqual(height, 420.0)
+    }
 }

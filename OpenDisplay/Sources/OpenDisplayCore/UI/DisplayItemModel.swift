@@ -25,6 +25,7 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
     @Published public var isNotchOverlayActive: Bool
     @Published public var hasPhysicalNotch: Bool
     @Published public var isMirrored: Bool
+    @Published public var isMirrorMaster: Bool = false
     @Published public var isDisconnected: Bool
     @Published public var rotation: DisplayRotationAngle = .standard
     @Published public var colorProfileName: String?
@@ -32,16 +33,19 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
     @Published public var availableResolutions: [DisplayResolutionDescriptor] = [] {
         didSet {
             let uniqueModes = ResolutionClassifier.deduplicatedResolutions(from: availableResolutions)
-            hiDPIResolutions = uniqueModes.filter { $0.isHiDPI }
-            nativeAndStandardResolutions = uniqueModes.filter { !$0.isHiDPI }
+            hiDPIResolutions = uniqueModes.filter { $0.isHiDPI && ResolutionClassifier.isStandardResolution($0) }
+            nativeAndStandardResolutions = uniqueModes.filter { !$0.isHiDPI && ResolutionClassifier.isStandardResolution($0) }
+            lowResLegacyResolutions = uniqueModes.filter { !ResolutionClassifier.isStandardResolution($0) }
             recommendedResolutions = uniqueModes.filter { $0.isRecommended }
             otherResolutions = uniqueModes.filter { !$0.isRecommended }
         }
     }
     @Published public private(set) var hiDPIResolutions: [DisplayResolutionDescriptor] = []
     @Published public private(set) var nativeAndStandardResolutions: [DisplayResolutionDescriptor] = []
+    @Published public private(set) var lowResLegacyResolutions: [DisplayResolutionDescriptor] = []
     @Published public private(set) var recommendedResolutions: [DisplayResolutionDescriptor] = []
     @Published public private(set) var otherResolutions: [DisplayResolutionDescriptor] = []
+    @Published public var showAllResolutions: Bool = false
     @Published public var selectedResolutionId: String?
     @Published public var availableRefreshRates: [Double] = []
     @Published public var currentRefreshRate: Double = 60.0

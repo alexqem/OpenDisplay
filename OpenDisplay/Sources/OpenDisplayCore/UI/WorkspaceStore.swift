@@ -95,6 +95,7 @@ public final class WorkspaceStore: ObservableObject {
             model.hasPhysicalNotch = NotchOverlayManager.hasPhysicalNotch(for: info.id)
             model.isNotchOverlayActive = NotchOverlayManager.shared.isOverlayActive(for: info.id)
             model.isMirrored = DisplayMirrorController.isMirroring(info.id)
+            model.isMirrorMaster = DisplayMirrorController.isMirrorSource(info.id)
             model.isDisconnected = DisplayPowerStateController.shared.isDisconnected(displayID: info.id)
             model.capabilities = DisplayInventory.probeCapabilities(for: info.id)
             if !model.isBuiltin && !model.isVirtual {

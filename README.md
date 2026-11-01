@@ -8,6 +8,11 @@ OpenDisplay provides complete, fine-grained control over external and built-in d
 
 ## Key Features
 
+- **AirPlay & Cast Display Sharpness (Hi Resolution & Ultra Sharp):**
+  - **Auto-detection of Cast/AirPlay displays** via vendor/model signatures and CoreGraphics online listings.
+  - **HiDPI "Hi Resolution" toggle (BetterDisplay parity):** Instant 1-click switch between native 1080p stream and sharp 960x540@2x Retina buffer.
+  - **Ultra Sharp Virtual Mirror Master (1440p / 4K):** Bypasses Apple's 1080p AirPlay limit by anchoring stream timing to a headless virtual master (1440p@60 or 4K@30 via private SkyLight `CGSConfigureDisplayMode`).
+  - **Recommended Android TV AirPlay Receiver:** For Android TV / Google TV without built-in Apple AirPlay or plagued by ad-interrupted commercial apps (like AirScreen), we recommend the 100% open-source, ad-free [GodMingFeng/airplay-android](https://github.com/GodMingFeng/airplay-android) (H.264 `MediaCodec` + AAC-ELD `AudioTrack` hardware decoding).
 - **Master-Slave Display Synchronization & Linked Controls:**
   - Group multiple displays with designated Master and Slave monitors.
   - Linked synchronized brightness, volume, and power adjustments with per-slave calibration offsets (`-50%` to `+50%`).

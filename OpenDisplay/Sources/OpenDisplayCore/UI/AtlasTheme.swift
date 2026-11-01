@@ -102,6 +102,16 @@ public enum AtlasTheme {
     public static let popoverWidth: CGFloat = 360.0
     public static let popoverHeight: CGFloat = 580.0
     public static let maxScrollHeight: CGFloat = 500.0
+
+    /// Calculate adaptive max popover height ensuring it never clips beneath the Dock or screen bounds
+    public static func adaptivePopoverHeight() -> CGFloat {
+        if let screen = NSScreen.main {
+            let visibleH = screen.visibleFrame.height
+            // Leave headroom for menu bar and dock margins
+            return min(popoverHeight, max(420.0, visibleH - 120.0))
+        }
+        return popoverHeight
+    }
     public static let pickerWidth: CGFloat = 110.0
     public static let pickerNarrowWidth: CGFloat = 72.0
     public static let pickerMirrorWidth: CGFloat = 110.0
