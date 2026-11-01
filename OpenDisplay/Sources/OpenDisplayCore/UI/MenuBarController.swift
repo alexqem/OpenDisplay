@@ -12,6 +12,29 @@ public final class MenuBarController: NSObject {
         AppLogger.shared.log("MenuBarController initializing status item...")
         setupStatusItem()
         setupPopover()
+        setupScreenChangeObserver()
+    }
+
+    private func setupScreenChangeObserver() {
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleScreenParametersChanged()
+        }
+    }
+
+    private func handleScreenParametersChanged() {
+        guard popover.isShown, statusItem?.button != nil else { return }
+        // When display resolution/geometry changes while the popover is visible,
+        // NSPopover's window frame retains the old screen coordinates, causing it
+        // to drift off-screen or above the menu bar. Reposition it cleanly.
+        popover.performClose(nil)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            guard let self = self, let btn = self.statusItem?.button else { return }
+            self.popover.show(relativeTo: btn.bounds, of: btn, preferredEdge: .minY)
+        }
     }
 
     private func setupStatusItem() {
