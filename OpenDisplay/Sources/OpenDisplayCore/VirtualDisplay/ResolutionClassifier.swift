@@ -165,4 +165,24 @@ public enum ResolutionClassifier {
             aspectRatioString: aspect
         )
     }
+
+    // MARK: - HiDPI Toggle Mode Selection (BetterDisplay "Hi Resolution" parity)
+
+    /// Pick the HiDPI mode with the largest pixel buffer (cast displays: 960x540@2x = 1080p stream)
+    public static func bestHiDPIMode(in modes: [DisplayResolutionDescriptor]) -> DisplayResolutionDescriptor? {
+        return modes
+            .filter { $0.isHiDPI }
+            .max { $0.pixelWidth * $0.pixelHeight < $1.pixelWidth * $1.pixelHeight }
+    }
+
+    /// Pick the LoDPI counterpart: same point size at 1x, else the largest 1x buffer
+    public static func bestLoDPIMode(current: DisplayResolutionDescriptor, in modes: [DisplayResolutionDescriptor]) -> DisplayResolutionDescriptor? {
+        let samePoints = modes.filter { !$0.isHiDPI && $0.pointWidth == current.pointWidth && $0.pointHeight == current.pointHeight }
+        if let exact = samePoints.max(by: { $0.pixelWidth * $0.pixelHeight < $1.pixelWidth * $1.pixelHeight }) {
+            return exact
+        }
+        return modes
+            .filter { !$0.isHiDPI }
+            .max { $0.pixelWidth * $0.pixelHeight < $1.pixelWidth * $1.pixelHeight }
+    }
 }

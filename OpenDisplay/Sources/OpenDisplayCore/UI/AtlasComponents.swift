@@ -113,6 +113,30 @@ public struct AtlasPillButton: View {
     }
 }
 
+/// Native macOS rounded pill toggle label for active/inactive states
+public struct AtlasPillToggle: View {
+    public let label: String
+    public let isActive: Bool
+
+    public init(label: String, isActive: Bool) {
+        self.label = label
+        self.isActive = isActive
+    }
+
+    public var body: some View {
+        Text(label)
+            .font(.system(size: 10, weight: .semibold))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(
+                Capsule().fill(isActive ? Color.accentColor.opacity(0.25) : Color.primary.opacity(0.06))
+            )
+            .overlay(
+                Capsule().stroke(isActive ? Color.accentColor : Color.primary.opacity(0.12), lineWidth: 0.5)
+            )
+    }
+}
+
 /// Smooth native icon button with hover and rounded corner
 public struct AtlasIconButton: View {
     public let systemName: String

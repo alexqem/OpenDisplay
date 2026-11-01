@@ -55,6 +55,44 @@ public enum ICCHeaderParser {
     }
 }
 
+/// Pure logic for filtering per-display ICC profile litter.
+/// macOS keeps `/Library/ColorSync/Profiles/Displays/<Name>-<UUID>.icc` forever after a
+/// display (especially a virtual one) dies, so profile pickers must filter that
+/// directory to UUIDs of currently-online displays.
+public enum ICCProfileFilter {
+
+    /// Identify whether an ICC profile lives in the per-display auto-generated directory
+    public static func isPerDisplayProfile(directoryName: String) -> Bool {
+        directoryName == ColorProfileConstants.displaysDirectory
+    }
+
+    /// Extract the ColorSync UUID from a per-display profile filename
+    /// ("Color LCD-37D8832A-2D66-02CA-B9F7-8F30A301B230" -> "37D8832A-...-B230")
+    public static func displayUUID(fromProfileFileName fileName: String) -> String? {
+        let name = (fileName as NSString).deletingPathExtension
+        let parts = name.split(separator: "-", omittingEmptySubsequences: false).map(String.init)
+        // UUID = 8-4-4-4-12 hex segments at the tail
+        guard parts.count >= 5 else { return nil }
+        let tail = Array(parts.suffix(5))
+        let expected = [8, 4, 4, 4, 12]
+        for (segment, length) in zip(tail, expected) {
+            guard segment.count == length, segment.allSatisfy({ $0.isHexDigit }) else { return nil }
+        }
+        return tail.joined(separator: "-")
+    }
+
+    /// Whether a profile file belongs in the picker list
+    public static func shouldInclude(
+        fileName: String,
+        isPerDisplayProfile: Bool,
+        onlineDisplayUUIDs: Set<String>
+    ) -> Bool {
+        guard isPerDisplayProfile else { return true }
+        guard let uuid = displayUUID(fromProfileFileName: fileName) else { return false }
+        return onlineDisplayUUIDs.contains(uuid)
+    }
+}
+
 #if os(macOS) && arch(arm64)
 import CoreGraphics
 @preconcurrency import ColorSync
@@ -65,8 +103,11 @@ public final class ColorProfileController: @unchecked Sendable {
 
     private init() {}
 
-    /// Enumerate all available ICC profiles from standard filesystem directories
+    /// Enumerate all available ICC profiles from standard filesystem directories.
+    /// Factory/working-space profiles always pass; per-display profiles (Displays/
+    /// subdirectory) are kept only when their UUID matches a currently-online display.
     public func enumerateProfiles() -> [ICCProfileInfo] {
+        let onlineUUIDs = Self.onlineDisplayUUIDs()
         var profiles: [ICCProfileInfo] = []
         let fileManager = FileManager.default
 
@@ -74,7 +115,7 @@ public final class ColorProfileController: @unchecked Sendable {
         let userDir = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(ColorProfileConstants.userColorSyncSubpath)
         searchDirs.append(userDir)
 
-        var seenPaths = Set<URL>()
+        var seenNames = Set<String>()
 
         for dir in searchDirs {
             guard let enumerator = fileManager.enumerator(
@@ -84,7 +125,6 @@ public final class ColorProfileController: @unchecked Sendable {
             ) else { continue }
 
             while let url = enumerator.nextObject() as? URL {
-                guard !seenPaths.contains(url) else { continue }
                 let ext = url.pathExtension.lowercased()
                 guard ext == ColorProfileConstants.iccExtension || ext == ColorProfileConstants.icmExtension else {
                     continue
@@ -102,13 +142,37 @@ public final class ColorProfileController: @unchecked Sendable {
                 // Only allow monitor RGB profiles; printer (CMYK), abstract (Lab), and grayscale profiles cause SkyLight assertion crashes
                 guard devClass == "mntr" && colorSpace == "RGB" else { continue }
 
-                seenPaths.insert(url)
+                // Hide orphaned per-display profiles (dead monitors, torn-down virtual screens)
+                let isPerDisplay = ICCProfileFilter.isPerDisplayProfile(directoryName: url.deletingLastPathComponent().lastPathComponent)
+                guard ICCProfileFilter.shouldInclude(
+                    fileName: url.lastPathComponent,
+                    isPerDisplayProfile: isPerDisplay,
+                    onlineDisplayUUIDs: onlineUUIDs
+                ) else { continue }
+
+                // One entry per name: identical display names across directories are ambiguous in UI
                 let name = url.deletingPathExtension().lastPathComponent
+                guard !seenNames.contains(name) else { continue }
+
+                seenNames.insert(name)
                 profiles.append(ICCProfileInfo(name: name, path: url))
             }
         }
 
         return profiles.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    /// ColorSync UUIDs of every currently-online display
+    public static func onlineDisplayUUIDs() -> Set<String> {
+        var uuids = Set<String>()
+        for id in DisplayInventory.onlineDisplayIDs() {
+            guard let rawUUID = CGDisplayCreateUUIDFromDisplayID(id) else { continue }
+            let cfUUID = rawUUID.takeRetainedValue()
+            if let string = CFUUIDCreateString(kCFAllocatorDefault, cfUUID) {
+                uuids.insert(string as String)
+            }
+        }
+        return uuids
     }
 
     /// Apply ICC profile to target display using ColorSync

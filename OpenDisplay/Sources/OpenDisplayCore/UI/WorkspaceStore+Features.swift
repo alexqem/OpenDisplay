@@ -109,6 +109,60 @@ extension WorkspaceStore {
         item.isNotchOverlayActive = active
     }
 
+    // MARK: - HiDPI Toggle (BetterDisplay "Hi Resolution" parity)
+
+    /// Toggle HiDPI rendering: switches to the largest HiDPI buffer, or back to the
+    /// matching 1x mode (cast displays: 1344x756@1x <-> 960x540@2x with 1080p stream)
+    public func toggleHiDPI(for item: DisplayItemModel) {
+        let modes = item.availableResolutions
+        guard !modes.isEmpty else { return }
+
+        let target: DisplayResolutionDescriptor?
+        if item.isHiDPI {
+            guard let current = modes.first(where: { $0.isCurrent }) ?? modes.first(where: { $0.id == item.selectedResolutionId }) else {
+                return
+            }
+            target = ResolutionClassifier.bestLoDPIMode(current: current, in: modes)
+        } else {
+            target = ResolutionClassifier.bestHiDPIMode(in: modes)
+        }
+
+        guard let mode = target else {
+            activeTooltipText = "No HiDPI alternative available for this display"
+            return
+        }
+        setResolution(item, mode: mode)
+    }
+
+    // MARK: - Ultra Sharp Cast (Virtual Mirror Master)
+
+    /// Toggle the virtual resolution master for a cast display
+    public func toggleCastUltraSharp(for item: DisplayItemModel, tier: CastVirtualResolutionController.SharpnessTier) {
+        let controller = CastVirtualResolutionController.shared
+        if controller.isActive(for: item.id) {
+            if controller.tier == tier {
+                if controller.disable() {
+                    activeTooltipText = "Ultra Sharp disabled - AirPlay returned to default timing"
+                }
+            } else {
+                // Switching sharpness tiers: tear down existing master and bring up new tier
+                _ = controller.disable()
+                if controller.enable(castID: item.id, tier: tier) {
+                    activeTooltipText = "Switched to Ultra Sharp \(tier.label)"
+                } else {
+                    activeTooltipText = "Failed to switch to Ultra Sharp \(tier.label)"
+                }
+            }
+        } else {
+            if controller.enable(castID: item.id, tier: tier) {
+                activeTooltipText = "Ultra Sharp \(tier.label) active - UI runs at \(tier.pixelWidth / 2)x\(tier.pixelHeight / 2) points"
+            } else {
+                activeTooltipText = "Failed to enable Ultra Sharp for \(item.name)"
+            }
+        }
+        refresh()
+    }
+
     public func togglePip(for displayID: CGDirectDisplayID) {
         cyclePipStream(
             isTargetActive: pipDisplayID == displayID,

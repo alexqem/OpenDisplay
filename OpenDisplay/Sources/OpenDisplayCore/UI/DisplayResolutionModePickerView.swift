@@ -12,6 +12,11 @@ public struct DisplayResolutionModePickerView: View {
 
     public var body: some View {
         VStack(spacing: 6) {
+            // 0. Ultra Sharp Cast (virtual mirror master) for AirPlay destinations
+            if item.isCast && !item.isVirtual {
+                CastUltraSharpRow(item: item)
+            }
+
             // 1. Resolution Dropdown
             HStack(spacing: 8) {
                 Label("Resolution", systemImage: "display")
@@ -110,6 +115,38 @@ public struct DisplayResolutionModePickerView: View {
             return "\(intRate)Hz"
         } else {
             return String(format: "%.2fHz", rate)
+        }
+    }
+}
+
+/// Ultra Sharp Cast row: virtual mirror master so AirPlay streams above its default timing
+public struct CastUltraSharpRow: View {
+    @ObservedObject public var item: DisplayItemModel
+    @ObservedObject private var store = WorkspaceStore.shared
+
+    public init(item: DisplayItemModel) {
+        self.item = item
+    }
+
+    public var body: some View {
+        HStack(spacing: 8) {
+            Label("Ultra Sharp", systemImage: "wand.and.stars")
+                .font(.system(size: AtlasTheme.fontBodySmall, weight: .medium))
+                .foregroundStyle(Color.primary)
+
+            Spacer()
+
+            ForEach(CastVirtualResolutionController.SharpnessTier.allCases, id: \.rawValue) { tier in
+                let active = CastVirtualResolutionController.shared.isActive(for: item.id)
+                    && CastVirtualResolutionController.shared.tier == tier
+                Button {
+                    store.toggleCastUltraSharp(for: item, tier: tier)
+                } label: {
+                    AtlasPillToggle(label: tier.label, isActive: active)
+                }
+                .buttonStyle(.plain)
+                .help(active ? "Disable Ultra Sharp (restore AirPlay default)" : "Mirror through a virtual \(tier.rawValue) master - sharper stream, UI at \(tier.pixelWidth / 2)x\(tier.pixelHeight / 2)")
+            }
         }
     }
 }

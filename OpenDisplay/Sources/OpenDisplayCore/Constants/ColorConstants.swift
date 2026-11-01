@@ -94,6 +94,8 @@ public enum ColorProfileConstants {
     public static let icmExtension: String = "icm"
     public static let defaultColorSpace: String = "RGB"
     public static let userColorSyncSubpath: String = "Library/ColorSync/Profiles"
+    /// Subdirectory of auto-generated per-display profiles (<Name>-<ColorSyncUUID>.icc)
+    public static let displaysDirectory: String = "Displays"
     public static let headerColorSpaceOffset: Int = 16
     public static let headerColorSpaceLength: Int = 4
     public static let minHeaderLength: Int = 20

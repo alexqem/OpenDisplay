@@ -24,11 +24,11 @@ public struct DisplayCardHeaderView: View {
             if item.isVirtual {
                 AtlasBadge("Virtual", style: .brand)
             }
+            if item.isCast {
+                AtlasBadge("Cast", style: .brand)
+            }
             if item.isMirrored {
                 AtlasBadge("Mirrored", style: .muted)
-            }
-            if item.isHiDPI {
-                AtlasBadge("HiDPI", style: .brand)
             }
             if item.isGroupMaster {
                 AtlasBadge("Master", style: .brand)
@@ -37,6 +37,18 @@ public struct DisplayCardHeaderView: View {
             }
 
             Spacer()
+
+            // HiDPI toggle (BetterDisplay "Hi Resolution" parity): visible when HiDPI
+            // alternatives exist or the display currently renders in HiDPI
+            if showsHiDPIToggle {
+                Button {
+                    WorkspaceStore.shared.toggleHiDPI(for: item)
+                } label: {
+                    AtlasPillToggle(label: "HiDPI", isActive: item.isHiDPI)
+                }
+                .buttonStyle(.plain)
+                .help(item.isHiDPI ? "HiDPI rendering active - click to switch to 1x" : "Enable HiDPI rendering (sharper stream)")
+            }
 
             if item.isBuiltin {
                 Text("Built-in")
@@ -58,7 +70,12 @@ public struct DisplayCardHeaderView: View {
 
     private var headerIcon: String {
         if item.isVirtual { return "rectangle.on.rectangle" }
+        if item.isCast { return "airplayaudio" }
         return item.isBuiltin ? "laptopcomputer" : "display"
+    }
+
+    private var showsHiDPIToggle: Bool {
+        !item.isVirtual && (!item.hiDPIResolutions.isEmpty || item.isHiDPI)
     }
 }
 #endif

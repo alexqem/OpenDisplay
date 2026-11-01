@@ -11,6 +11,7 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
     public let name: String
     public let isBuiltin: Bool
     public let isVirtual: Bool
+    public let isCast: Bool
     public let isHiDPI: Bool
     public let pixelWidth: Int
     public let pixelHeight: Int
@@ -67,6 +68,7 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
         is10BitActive: Bool = false,
         isBuiltin: Bool = false,
         isVirtual: Bool = false,
+        isCast: Bool = false,
         isHiDPI: Bool = false,
         pixelWidth: Int = 0,
         pixelHeight: Int = 0
@@ -81,6 +83,7 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
         self.is10BitActive = is10BitActive
         self.isBuiltin = isBuiltin
         self.isVirtual = isVirtual
+        self.isCast = isCast
         self.isHiDPI = isHiDPI
         self.pixelWidth = pixelWidth
         self.pixelHeight = pixelHeight

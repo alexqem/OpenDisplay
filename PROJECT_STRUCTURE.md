@@ -19,7 +19,7 @@ OpenDisplay/
 │   │   └── DynamicObjCClass.swift                     # Objective-C runtime class allocator
 │   ├── Hardware/                                      # Low-level IOKit, AVService, DDC/CI & inventory
 │   │   ├── AppleDisplayServicesBridge.swift           # Native Apple display brightness wrapper
-│   │   ├── DisplayInventory.swift                     # Live NSScreen + CGDirectDisplayID enumeration & UUIDs
+│   │   ├── DisplayInventory.swift                     # Live NSScreen + CGDirectDisplayID enumeration & UUIDs, AirPlay cast detection (aapl/airp)
 │   │   ├── IOAVServiceDDC.swift                       # Apple Silicon IOAVService I2C packet dispatch
 │   │   └── IOAVServiceMatcher.swift                   # 8-level IORegistry hierarchy search for EDID
 │   ├── Color/                                         # ColorSync, EDID manipulation & HDR/10-bit modes
@@ -37,6 +37,7 @@ OpenDisplay/
 │   │   ├── DisplayArrangementController.swift         # Display coordinates (origin X/Y) & main display swap
 │   │   ├── DisplayGroupManager.swift                  # Multi-monitor Master-Slave linking & sync
 │   │   ├── DisplayMirrorController.swift              # Hardware/software mirror pairing
+│   │   ├── CastVirtualResolutionController.swift      # Ultra Sharp Cast: virtual mirror master (1440p/4K AirPlay stream)
 │   │   ├── DisplayPowerStateController.swift          # Display blanking, sleep & orientation (0/90/180/270)
 │   │   ├── DisplayPresetManager.swift                 # JSON snapshot serializer & preset bank
 │   │   ├── ResolutionClassifier.swift                 # HiDPI vs Native vs Standard mode classification

@@ -63,6 +63,17 @@ public final class WorkspaceStore: ObservableObject {
                 self?.handleMediaKey(action)
             }
         }
+        // Live display topology tracking: re-enumerate whenever displays connect,
+        // disconnect, or reconfigure (fixes cast/AirPlay destinations not appearing)
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.refresh()
+            }
+        }
         refresh()
     }
 
@@ -70,8 +81,14 @@ public final class WorkspaceStore: ObservableObject {
 
     /// Re-enumerate displays and refresh live per-display state, preserving local slider values
     public func refresh() {
+        let currentInfos = DisplayInventory.currentDisplays()
+
+        // Virtual cast-sharpness master outlives its AirPlay destination when mirroring ends
+        let onlineCastIDs = currentInfos.filter(\.isCast).map(\.id)
+        CastVirtualResolutionController.shared.teardownIfOrphaned(onlineCastIDs: onlineCastIDs)
+
         var refreshed: [DisplayItemModel] = []
-        for info in DisplayInventory.currentDisplays() {
+        for info in currentInfos {
             let model = displays.first(where: { $0.id == info.id }) ?? makeModel(from: info)
             model.isHDREnabled = dispatcher.isHDREnabled(displayID: info.id)
             model.is10BitActive = dispatcher.is10BitColorActive(displayID: info.id)
@@ -126,6 +143,7 @@ public final class WorkspaceStore: ObservableObject {
             brightness: Double(brightness),
             isBuiltin: info.isBuiltin,
             isVirtual: dispatcher.isVirtual(displayID: info.id),
+            isCast: info.isCast,
             isHiDPI: info.isHiDPI,
             pixelWidth: info.pixelWidth,
             pixelHeight: info.pixelHeight
