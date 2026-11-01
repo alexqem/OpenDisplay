@@ -55,7 +55,7 @@ public struct DisplayCardHeaderView: View {
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(Color.secondary)
             } else if item.currentRefreshRate > 0 {
-                Text("\(Int(item.currentRefreshRate.rounded()))Hz")
+                Text(ResolutionClassifier.formatRefreshRate(item.currentRefreshRate, isBuiltin: false))
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(Color.secondary)
             }

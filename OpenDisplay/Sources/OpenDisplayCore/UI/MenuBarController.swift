@@ -4,8 +4,10 @@ import SwiftUI
 
 /// Status Bar Item Controller hosting SwiftUI App Menu Popover with robust fallback rendering
 public final class MenuBarController: NSObject {
+    private static let popoverReopenDelay: TimeInterval = 0.1
     private var statusItem: NSStatusItem?
     private let popover = NSPopover()
+    private var isReopeningPopover: Bool = false
 
     public override init() {
         super.init()
@@ -26,15 +28,18 @@ public final class MenuBarController: NSObject {
     }
 
     private func handleScreenParametersChanged() {
-        guard popover.isShown, statusItem?.button != nil else { return }
+        guard popover.isShown, !isReopeningPopover, statusItem?.button != nil else { return }
         // When display resolution/geometry changes while the popover is visible,
         // NSPopover's window frame retains the old screen coordinates, causing it
         // to drift off-screen or above the menu bar. Reposition it cleanly.
         let newHeight = AtlasTheme.adaptivePopoverHeight()
         popover.contentSize = NSSize(width: AtlasTheme.popoverWidth, height: newHeight)
+        isReopeningPopover = true
         popover.performClose(nil)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            guard let self = self, let btn = self.statusItem?.button else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.popoverReopenDelay) { [weak self] in
+            guard let self = self else { return }
+            self.isReopeningPopover = false
+            guard let btn = self.statusItem?.button else { return }
             self.popover.show(relativeTo: btn.bounds, of: btn, preferredEdge: .minY)
         }
     }

@@ -32,12 +32,7 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
     @Published public var inputSource: DDCInputSource?
     @Published public var availableResolutions: [DisplayResolutionDescriptor] = [] {
         didSet {
-            let uniqueModes = ResolutionClassifier.deduplicatedResolutions(from: availableResolutions)
-            hiDPIResolutions = uniqueModes.filter { $0.isHiDPI && ResolutionClassifier.isStandardResolution($0) }
-            nativeAndStandardResolutions = uniqueModes.filter { !$0.isHiDPI && ResolutionClassifier.isStandardResolution($0) }
-            lowResLegacyResolutions = uniqueModes.filter { !ResolutionClassifier.isStandardResolution($0) }
-            recommendedResolutions = uniqueModes.filter { $0.isRecommended }
-            otherResolutions = uniqueModes.filter { !$0.isRecommended }
+            reclassifyResolutions()
         }
     }
     @Published public private(set) var hiDPIResolutions: [DisplayResolutionDescriptor] = []
@@ -46,6 +41,40 @@ public final class DisplayItemModel: ObservableObject, Identifiable {
     @Published public private(set) var recommendedResolutions: [DisplayResolutionDescriptor] = []
     @Published public private(set) var otherResolutions: [DisplayResolutionDescriptor] = []
     @Published public var showAllResolutions: Bool = false
+
+    private func reclassifyResolutions() {
+        let uniqueModes = ResolutionClassifier.deduplicatedResolutions(from: availableResolutions)
+        var hiDPI: [DisplayResolutionDescriptor] = []
+        var nativeAndStd: [DisplayResolutionDescriptor] = []
+        var legacyLowRes: [DisplayResolutionDescriptor] = []
+        var recommended: [DisplayResolutionDescriptor] = []
+        var other: [DisplayResolutionDescriptor] = []
+
+        for mode in uniqueModes {
+            let isStd = ResolutionClassifier.isStandardResolution(mode)
+            if isStd {
+                if mode.isHiDPI {
+                    hiDPI.append(mode)
+                } else {
+                    nativeAndStd.append(mode)
+                }
+            } else {
+                legacyLowRes.append(mode)
+            }
+
+            if mode.isRecommended {
+                recommended.append(mode)
+            } else {
+                other.append(mode)
+            }
+        }
+
+        self.hiDPIResolutions = hiDPI
+        self.nativeAndStandardResolutions = nativeAndStd
+        self.lowResLegacyResolutions = legacyLowRes
+        self.recommendedResolutions = recommended
+        self.otherResolutions = other
+    }
     @Published public var selectedResolutionId: String?
     @Published public var availableRefreshRates: [Double] = []
     @Published public var currentRefreshRate: Double = 60.0

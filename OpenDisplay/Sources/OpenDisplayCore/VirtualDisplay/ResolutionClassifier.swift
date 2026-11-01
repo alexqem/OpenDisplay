@@ -193,6 +193,20 @@ public enum ResolutionClassifier {
         }
     }
 
+    /// Format refresh rate as clean string: e.g. "60Hz", "120Hz (ProMotion)", "59.94Hz"
+    public static func formatRefreshRate(_ rate: Double, isBuiltin: Bool = false) -> String {
+        let rounded = rate.rounded()
+        if abs(rate - rounded) < 0.05 {
+            let intRate = Int(rounded)
+            if intRate == 120 && isBuiltin {
+                return "120Hz (ProMotion)"
+            }
+            return "\(intRate)Hz"
+        } else {
+            return String(format: "%.2fHz", rate)
+        }
+    }
+
     /// Minimum point height to be considered a standard modern resolution without expanding low-res
     public static let standardMinimumPointHeight: Int = 540
 

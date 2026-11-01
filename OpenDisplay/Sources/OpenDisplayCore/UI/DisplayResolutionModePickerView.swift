@@ -52,7 +52,7 @@ public struct DisplayResolutionModePickerView: View {
                             }
 
                             if item.showAllResolutions && !item.lowResLegacyResolutions.isEmpty {
-                                Section(header: Text("Legacy Low-Res Modes (<540p)")) {
+                                Section(header: Text("Legacy Low-Res Modes (<\(ResolutionClassifier.standardMinimumPointHeight)p)")) {
                                     ForEach(item.lowResLegacyResolutions) { mode in
                                         Text(mode.resolutionOnlyLabel).tag(mode.id as String?)
                                     }
@@ -63,7 +63,7 @@ public struct DisplayResolutionModePickerView: View {
                     .labelsHidden()
                     .pickerStyle(.menu)
                     .controlSize(.small)
-                    .frame(maxWidth: 160)
+                    .frame(maxWidth: AtlasTheme.pickerMaxWidth)
                 }
             }
 
@@ -75,7 +75,7 @@ public struct DisplayResolutionModePickerView: View {
                         item.showAllResolutions.toggle()
                     } label: {
                         Text(item.showAllResolutions ? "Hide low-res modes" : "Show all resolutions (\(item.lowResLegacyResolutions.count) low-res hidden)")
-                            .font(.system(size: 9, weight: .medium))
+                            .font(.system(size: AtlasTheme.fontCaptionMicro, weight: .medium))
                             .foregroundStyle(Color.secondary)
                     }
                     .buttonStyle(.plain)
@@ -91,16 +91,16 @@ public struct DisplayResolutionModePickerView: View {
                 Spacer()
 
                 if item.isMirrored {
-                    Text("\(Int(item.currentRefreshRate.rounded()))Hz (Slave)")
+                    Text("\(ResolutionClassifier.formatRefreshRate(item.currentRefreshRate, isBuiltin: item.isBuiltin)) (Slave)")
                         .font(.system(size: AtlasTheme.fontCaptionSmall))
                         .foregroundStyle(Color.secondary)
                 } else {
                     Picker("", selection: refreshRateBinding) {
                         if item.availableRefreshRates.isEmpty {
-                            Text("\(Int(item.currentRefreshRate.rounded()))Hz").tag(item.currentRefreshRate)
+                            Text(ResolutionClassifier.formatRefreshRate(item.currentRefreshRate, isBuiltin: item.isBuiltin)).tag(item.currentRefreshRate)
                         } else {
                             ForEach(item.availableRefreshRates, id: \.self) { rate in
-                                let label = formatRate(rate)
+                                let label = ResolutionClassifier.formatRefreshRate(rate, isBuiltin: item.isBuiltin)
                                 Text(label).tag(rate)
                             }
                         }
@@ -108,7 +108,7 @@ public struct DisplayResolutionModePickerView: View {
                     .labelsHidden()
                     .pickerStyle(.menu)
                     .controlSize(.small)
-                    .frame(maxWidth: 160)
+                    .frame(maxWidth: AtlasTheme.pickerMaxWidth)
                 }
             }
         }
@@ -150,19 +150,6 @@ public struct DisplayResolutionModePickerView: View {
                 store.setRefreshRate(item, rate: newRate)
             }
         )
-    }
-
-    private func formatRate(_ rate: Double) -> String {
-        let rounded = rate.rounded()
-        if abs(rate - rounded) < 0.05 {
-            let intRate = Int(rounded)
-            if intRate == 120 && item.isBuiltin {
-                return "120Hz (ProMotion)"
-            }
-            return "\(intRate)Hz"
-        } else {
-            return String(format: "%.2fHz", rate)
-        }
     }
 }
 

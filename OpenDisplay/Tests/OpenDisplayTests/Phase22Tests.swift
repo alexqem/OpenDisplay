@@ -245,6 +245,13 @@ final class Phase22Tests: XCTestCase {
     func testAdaptivePopoverHeightNeverExceedsDefault() {
         let height = AtlasTheme.adaptivePopoverHeight()
         XCTAssertLessThanOrEqual(height, AtlasTheme.popoverHeight)
-        XCTAssertGreaterThanOrEqual(height, 420.0)
+        XCTAssertGreaterThanOrEqual(height, AtlasTheme.adaptivePopoverMinHeight)
+    }
+
+    func testFormatRefreshRateSharedUtility() {
+        XCTAssertEqual(ResolutionClassifier.formatRefreshRate(120.0, isBuiltin: true), "120Hz (ProMotion)")
+        XCTAssertEqual(ResolutionClassifier.formatRefreshRate(120.0, isBuiltin: false), "120Hz")
+        XCTAssertEqual(ResolutionClassifier.formatRefreshRate(60.0), "60Hz")
+        XCTAssertEqual(ResolutionClassifier.formatRefreshRate(59.94), "59.94Hz")
     }
 }
